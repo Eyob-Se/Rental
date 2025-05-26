@@ -19,6 +19,17 @@ $reqStmt = $pdo->prepare("SELECT house_id, status FROM rental_requests WHERE ten
 $reqStmt->execute([$tenantId]);
 $requestedHouses = $reqStmt->fetchAll(PDO::FETCH_KEY_PAIR); 
 // returns array like [house_id => status, ...]
+
+// Fetch houses actually rented by the tenant
+$rentedStmt = $pdo->prepare("
+    SELECT rr.house_id 
+    FROM rental_requests rr
+    JOIN houses h ON rr.house_id = h.id
+    WHERE rr.tenant_id = ? AND rr.status = 'approved' AND h.is_rented = 1
+");
+$rentedStmt->execute([$tenantId]);
+$rentedHouses = $rentedStmt->fetchAll(PDO::FETCH_COLUMN); // returns array of house_ids
+
 ?>
 
 <!DOCTYPE html>
@@ -82,7 +93,9 @@ $requestedHouses = $reqStmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
 <?php if (isset($requestedHouses[$house['id']])): 
     $status = $requestedHouses[$house['id']];
-    if ($status === 'approved'): ?>
+    if ($status === 'approved' && in_array($house['id'], $rentedHouses)): ?>
+        <p class="btn" style="background-color: #0069d9; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold;">Rented</p>
+    <?php elseif ($status === 'approved'): ?>
         <p class="btn approved">Approved</p>
     <?php elseif ($status === 'declined'): ?>
         <p class="btn declined">Declined</p>
@@ -99,7 +112,7 @@ $requestedHouses = $reqStmt->fetchAll(PDO::FETCH_KEY_PAIR);
       <?php endforeach; ?>
     </div>
 
-    <footer style="position: absolute; bottom: 0px; width: 100%;">
+    <footer>
         <div class="footer">
             <div class="footer-container">
                 <div class="footer-top">

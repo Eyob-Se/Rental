@@ -51,7 +51,7 @@ try {
               <p  style= "color: #ffffff;">You have made <strong><?= htmlspecialchars($payments_count) ?></strong> payments.</p>
       </div>
 
- <footer style="position: absolute; bottom: 0px; width: 100%;">
+ <footer>
     <div class="footer">
       <div class="footer-container">
         <div class="footer-top">

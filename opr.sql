@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: May 26, 2025 at 07:39 AM
+-- Host: 127.0.0.1
+-- Generation Time: May 26, 2025 at 09:00 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -49,10 +49,11 @@ CREATE TABLE `houses` (
 --
 
 INSERT INTO `houses` (`id`, `owner_id`, `title`, `location`, `bedrooms`, `bathrooms`, `area`, `description`, `price`, `status`, `image_path`, `created_at`, `property_manager_id`, `is_rented`) VALUES
-(6, 8, 'Apartment', 'Bole', 2, 2, 3212, NULL, 21321.00, 'approved', '1748145571_h2.jpg', '2025-05-25 03:59:31', 9, 0),
+(6, 8, 'Apartment', 'Bole', 2, 2, 3212, NULL, 21321.00, 'approved', '1748145571_h2.jpg', '2025-05-25 03:59:31', 9, 1),
 (7, 8, 'Apartment', 'Mexico', 3, 2, 3500, 'New House', 20000.00, 'approved', '1748145871_h1.jpg', '2025-05-25 04:04:31', 9, 0),
-(8, 8, 'Apartment', 'Lafto', 2, 1, 1500, 'New House', 15000.00, 'approved', '1748146181_h3.jpg', '2025-05-25 04:09:41', 9, 0),
-(9, 8, 'Apartment', 'Kera', 3, 1, 1809, 'New house', 21222.00, 'approved', '1748146324_h4.jpg', '2025-05-25 04:12:04', 9, 0);
+(8, 8, 'Apartment', 'Lafto', 2, 1, 1500, 'New House', 15000.00, 'approved', '1748146181_h3.jpg', '2025-05-25 04:09:41', 9, 1),
+(9, 8, 'Apartment', 'Kera', 3, 1, 1809, 'New house', 21222.00, 'approved', '1748146324_h4.jpg', '2025-05-25 04:12:04', 9, 1),
+(10, 8, 'Condominium', 'Addis Ababa, Tafo', 3, 1, 1000, 'located at tafo ', 20000.00, 'approved', '1748274327_g1.jpg', '2025-05-26 15:45:27', 9, 1);
 
 -- --------------------------------------------------------
 
@@ -66,10 +67,21 @@ CREATE TABLE `lease_agreements` (
   `tenant_id` int(11) NOT NULL,
   `owner_id` int(11) NOT NULL,
   `signed_by_tenant` tinyint(1) DEFAULT 0,
-  `signed_by_owner` tinyint(1) DEFAULT 0,
+  `signed_by_owner` tinyint(1) DEFAULT 1,
   `file_path` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` varchar(20) DEFAULT 'pending',
+  `signed_at` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `lease_agreements`
+--
+
+INSERT INTO `lease_agreements` (`id`, `house_id`, `tenant_id`, `owner_id`, `signed_by_tenant`, `signed_by_owner`, `file_path`, `created_at`, `status`, `signed_at`) VALUES
+(1, 9, 11, 8, 1, 0, 'lease_9_11_1748260463.txt', '2025-05-26 11:54:23', 'signed', '2025-05-26 19:46:11'),
+(2, 6, 11, 8, 1, 1, 'leases/lease_6_11_1748285366.pdf', '2025-05-26 15:35:15', 'signed', '2025-05-26 21:49:26'),
+(3, 10, 11, 8, 1, 1, NULL, '2025-05-26 15:53:02', 'signed', '2025-05-26 21:13:34');
 
 -- --------------------------------------------------------
 
@@ -100,7 +112,21 @@ INSERT INTO `notifications` (`id`, `sender_id`, `receiver_id`, `message`, `is_re
 (62, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-26 05:11:27', 'response', 'approved', 6),
 (63, 11, 9, 'I would like to rent this house.', 0, '2025-05-26 05:12:04', 'request', 'pending', 7),
 (64, 11, 9, 'I would like to rent this house.', 0, '2025-05-26 05:12:08', 'request', 'pending', 9),
-(65, 8, 9, 'Owner has declined the rental request.', 0, '2025-05-26 05:13:37', 'response', 'declined', 7);
+(65, 8, 9, 'Owner has declined the rental request.', 0, '2025-05-26 05:13:37', 'response', 'declined', 7),
+(66, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:39:07', 'request', 'unverified', 6),
+(67, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:48:45', 'request', 'unverified', 6),
+(68, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:50:18', 'request', 'unverified', 6),
+(69, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:52:23', 'request', 'unverified', 6),
+(70, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:54:06', 'request', 'unverified', 6),
+(71, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 08:59:46', 'request', 'unverified', 6),
+(72, 11, 9, 'New unverified payment receipt uploaded for House ID: 8.', 0, '2025-05-26 09:22:13', 'request', 'unverified', 8),
+(73, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-26 11:52:44', 'response', 'approved', 9),
+(74, 11, 9, 'New unverified payment receipt uploaded for House ID: 9.', 0, '2025-05-26 11:53:56', 'request', 'unverified', 9),
+(75, 11, 9, 'New unverified payment receipt uploaded for House ID: 6.', 0, '2025-05-26 15:33:54', 'request', 'unverified', 6),
+(76, 11, 9, 'I would like to rent this house.', 0, '2025-05-26 15:47:07', 'request', 'pending', 10),
+(77, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-26 15:52:17', 'response', 'approved', 10),
+(78, 11, 9, 'New unverified payment receipt uploaded for House ID: 10.', 0, '2025-05-26 15:52:42', 'request', 'unverified', 10),
+(79, 9, 11, 'A lease agreement has been generated for House: Condominium. Please sign it.', 0, '2025-05-26 15:53:02', 'lease', 'pending', 10);
 
 -- --------------------------------------------------------
 
@@ -147,7 +173,8 @@ INSERT INTO `rental_requests` (`id`, `tenant_id`, `house_id`, `status`, `created
 (18, 11, 6, 'approved', '2025-05-26 03:39:28', NULL, NULL, 9),
 (19, 11, 8, 'approved', '2025-05-26 03:39:33', NULL, NULL, 9),
 (20, 11, 7, 'declined', '2025-05-26 05:12:04', NULL, NULL, 9),
-(21, 11, 9, 'pending', '2025-05-26 05:12:08', NULL, NULL, NULL);
+(21, 11, 9, 'approved', '2025-05-26 05:12:08', NULL, NULL, 9),
+(22, 11, 10, 'approved', '2025-05-26 15:47:06', NULL, NULL, 9);
 
 -- --------------------------------------------------------
 
@@ -196,10 +223,23 @@ CREATE TABLE `transactions` (
   `tenant_id` int(11) NOT NULL,
   `house_id` int(11) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `tax` decimal(10,2) NOT NULL,
+  `fee` decimal(10,2) NOT NULL,
   `total` decimal(10,2) NOT NULL,
-  `payment_date` timestamp NOT NULL DEFAULT current_timestamp()
+  `payment_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` varchar(50) NOT NULL,
+  `file_path` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Dumping data for table `transactions`
+--
+
+INSERT INTO `transactions` (`id`, `tenant_id`, `house_id`, `amount`, `fee`, `total`, `payment_date`, `status`, `file_path`) VALUES
+(7, 11, 6, 21321.00, 2132.10, 23453.10, '2025-05-26 08:59:46', 'rejected', 'receipt_68342d8299257.png'),
+(8, 11, 8, 15000.00, 1500.00, 16500.00, '2025-05-26 09:22:12', 'verified', 'receipt_683432c4d5711.png'),
+(9, 11, 9, 21222.00, 2122.20, 23344.20, '2025-05-26 11:53:56', 'verified', 'receipt_68345654b96bd.png'),
+(10, 11, 6, 21321.00, 2132.10, 23453.10, '2025-05-26 15:33:54', 'verified', 'receipt_683489e29edcd.png'),
+(11, 11, 10, 20000.00, 2000.00, 22000.00, '2025-05-26 15:52:42', 'verified', 'receipt_68348e4a20b02.png');
 
 -- --------------------------------------------------------
 
@@ -308,25 +348,25 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `houses`
 --
 ALTER TABLE `houses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `lease_agreements`
 --
 ALTER TABLE `lease_agreements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `rental_requests`
 --
 ALTER TABLE `rental_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `reports`
@@ -338,7 +378,7 @@ ALTER TABLE `reports`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `users`

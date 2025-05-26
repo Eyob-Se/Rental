@@ -72,7 +72,7 @@ $houses = $pdo->query("SELECT * FROM houses WHERE status = 'pending'")->fetchAll
         <?php endif; ?>
     </div>
 
-    <footer style="position: absolute; bottom: 0px; width: 100%;">
+    <footer>
     <div class="footer">
       <div class="footer-container">
         <div class="footer-top">

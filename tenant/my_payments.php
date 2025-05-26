@@ -25,7 +25,7 @@ $payments = $stmt->fetchAll();
         <p>Rental.</p>
         <ul>
             <li><a href="../tenant/dashboard.php">Dashboard</a></li>
-            <li><a href="payments.php" class="active">My Payments</a></li>
+            <li><a href="my_payments.php" class="active">My Payments</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
