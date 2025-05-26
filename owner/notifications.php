@@ -16,19 +16,31 @@ try {
         die("Access denied.");
     }
 
-    $stmt = $pdo->prepare("
-        SELECT rr.id AS request_id, rr.message, rr.status, rr.created_at,
-               rr.pm_id,
-               u.name AS sender_name,
-               h.id AS house_id, h.title AS house_title, h.bedrooms, h.bathrooms, h.area, h.price, h.image_path
-        FROM rental_requests rr
-        JOIN users u ON rr.tenant_id = u.id
-        JOIN houses h ON rr.house_id = h.id
-        WHERE h.owner_id = ? AND rr.status = 'forwarded'
-        ORDER BY rr.created_at DESC
-    ");
-    $stmt->execute([$user_id]);
-    $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Query government notices
+$stmt = $pdo->prepare("
+    SELECT n.id, n.message, n.created_at, u.name AS sender_name
+    FROM notifications n
+    JOIN users u ON n.sender_id = u.id
+    WHERE n.receiver_id = ? AND n.type = 'government_notice'
+    ORDER BY n.created_at DESC
+");
+$stmt->execute([$user_id]);
+$gov_notices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Query rental requests
+$stmt = $pdo->prepare("
+    SELECT rr.id AS request_id, rr.message, rr.status, rr.created_at,
+           rr.pm_id,
+           u.name AS sender_name,
+           h.id AS house_id, h.title AS house_title, h.bedrooms, h.bathrooms, h.area, h.price, h.image_path
+    FROM rental_requests rr
+    JOIN users u ON rr.tenant_id = u.id
+    JOIN houses h ON rr.house_id = h.id
+    WHERE h.owner_id = ? AND rr.status = 'forwarded'
+    ORDER BY rr.created_at DESC
+");
+$stmt->execute([$user_id]);
+$rental_requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
@@ -61,51 +73,94 @@ try {
             <input type="text" id="notificationFilter" placeholder="🔍 Filter notifications" />
         </div>
 
-        <section>
-            <h3>Notifications</h3>
-            <table class="user-table" id="notificationTable">
-                <thead>
-                    <tr>
-                        <th>Sender</th>
-                        <th>Received</th>
-                        <th>Message</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-<?php if (count($notifications) === 0): ?>
-    <tr><td colspan="4">No rental requests.</td></tr>
-<?php else: ?>
-    <?php foreach ($notifications as $note): ?>
-        <tr>
-            <td><?= htmlspecialchars($note['sender_name']) ?></td>
-            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
-            <td>Rental request received for house: <?= htmlspecialchars($note['house_title']) ?></td>
-            <td>
-                <button 
-                    class="btn open-modal" 
-                    data-id="<?= $note['request_id'] ?>" 
-                    data-sender="<?= htmlspecialchars($note['sender_name']) ?>" 
-                    data-sender-id="<?= $note['pm_id'] ?>" 
-                    data-message="Rental request for <?= htmlspecialchars($note['house_title']) ?>"
-                    data-house="<?= htmlspecialchars($note['house_title']) ?>"
-                    data-house-id="<?= $note['house_id'] ?>"
-                    data-bedrooms="<?= $note['bedrooms'] ?>"
-                    data-bathrooms="<?= $note['bathrooms'] ?>"
-                    data-area="<?= $note['area'] ?>"
-                    data-price="<?= $note['price'] ?>"
-                    data-image="<?= htmlspecialchars($note['image_path']) ?>"
-                    data-status="<?= $note['status'] ?>"
-                >
-                    <?= $note['status'] === 'forwarded' ? 'Respond' : 'View' ?>
-                </button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-<?php endif; ?>
-                </tbody>
-            </table>
-        </section>
+<section>
+    <!-- Rental Requests Section -->
+    <h3>Rental Requests</h3>
+    <table class="user-table" id="rentalRequestTable">
+        <thead>
+            <tr>
+                <th>Tenant</th>
+                <th>Received</th>
+                <th>Message</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php if (count($rental_requests) === 0): ?>
+            <tr><td colspan="4">No rental requests.</td></tr>
+        <?php else: ?>
+            <?php foreach ($rental_requests as $note): ?>
+                <tr>
+                    <td><?= htmlspecialchars($note['sender_name']) ?></td>
+                    <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
+                    <td>Rental request for house: <?= htmlspecialchars($note['house_title']) ?></td>
+                    <td>
+                        <button 
+                            class="btn open-modal" 
+                            data-id="<?= $note['request_id'] ?>" 
+                            data-sender="<?= htmlspecialchars($note['sender_name']) ?>" 
+                            data-sender-id="<?= $note['pm_id'] ?>" 
+                            data-message="Rental request for <?= htmlspecialchars($note['house_title']) ?>"
+                            data-house="<?= htmlspecialchars($note['house_title']) ?>"
+                            data-house-id="<?= $note['house_id'] ?>"
+                            data-bedrooms="<?= $note['bedrooms'] ?>"
+                            data-bathrooms="<?= $note['bathrooms'] ?>"
+                            data-area="<?= $note['area'] ?>"
+                            data-price="<?= $note['price'] ?>"
+                            data-image="<?= htmlspecialchars($note['image_path']) ?>"
+                            data-status="<?= $note['status'] ?>"
+                        >
+                            Respond
+                        </button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        </tbody>
+    </table>
+
+<!-- Government Notice Modal -->
+ <table class="user-table">
+    <thead>
+            <tr>
+                <th>Tenant</th>
+                <th>Received</th>
+                <th>Message</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+<div id="govNoticeModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close" id="govNoticeClose">&times;</span>
+        <h3 style="color: #2b2d42;">Government Notice</h3>
+        <p><strong>Sender:</strong> <span id="govNoticeSender"></span></p>
+        <p><strong>Message:</strong></p>
+        <p id="govNoticeMessage" style="white-space: pre-wrap;"></p>
+    </div>
+</div>
+        <tbody>
+        <?php if (count($gov_notices) === 0): ?>
+            <tr><td colspan="4">No government notices.</td></tr>
+        <?php else: ?>
+            <?php foreach ($gov_notices as $note): ?>
+                <tr>
+                    <td><?= htmlspecialchars($note['sender_name']) ?></td>
+                    <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
+                    <td><?= htmlspecialchars($note['message']) ?></td>
+                    <td>
+<button 
+    class="btn open-modal" 
+    data-message="<?= htmlspecialchars($note['message']) ?>" 
+    data-sender="<?= htmlspecialchars($note['sender_name']) ?>" 
+    data-status="notice"
+>View</button>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        <?php endif; ?>
+        </tbody>
+    </table>
+</section>
     </div>
 </div>
 
@@ -136,42 +191,70 @@ try {
 <script src="../../assets/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Rental Requests Modal (your existing code)
     document.querySelectorAll('.open-modal').forEach(button => {
         button.addEventListener('click', () => {
-            document.getElementById('modalSender').textContent = button.dataset.sender;
-            document.getElementById('modalMessage').textContent = button.dataset.message;
-            document.getElementById('modalHouse').textContent = button.dataset.house;
-            document.getElementById('modalBedrooms').textContent = button.dataset.bedrooms;
-            document.getElementById('modalBathrooms').textContent = button.dataset.bathrooms;
-            document.getElementById('modalArea').textContent = button.dataset.area;
-            document.getElementById('modalPrice').textContent = button.dataset.price;
-            document.getElementById('modalImage').src = "../uploads/house_images/" + button.dataset.image;
+            if (button.dataset.status === 'notice') {
+                // This is a government notice, open govNoticeModal instead
+                document.getElementById('govNoticeSender').textContent = button.dataset.sender;
+                document.getElementById('govNoticeMessage').textContent = button.dataset.message;
+                document.getElementById('govNoticeModal').style.display = 'block';
 
-            document.getElementById('modalNotificationId').value = button.dataset.id;
-            document.getElementById('modalHouseId').value = button.dataset.houseId;
-            document.getElementById('modalSenderId').value = button.dataset.senderId;
+                // Hide rental request modal if open (just in case)
+                document.getElementById('actionModal').style.display = 'none';
+            } else {
+                // Rental request modal
+                document.getElementById('modalSender').textContent = button.dataset.sender;
+                document.getElementById('modalMessage').textContent = button.dataset.message;
+                document.getElementById('modalHouse').textContent = button.dataset.house;
+                document.getElementById('modalBedrooms').textContent = button.dataset.bedrooms;
+                document.getElementById('modalBathrooms').textContent = button.dataset.bathrooms;
+                document.getElementById('modalArea').textContent = button.dataset.area;
+                document.getElementById('modalPrice').textContent = button.dataset.price;
+                document.getElementById('modalImage').src = "../uploads/house_images/" + button.dataset.image;
 
-            const actionForm = document.querySelector('.modal-actions');
-            // Show approve/decline buttons only if status is forwarded
-            actionForm.style.display = button.dataset.status === 'forwarded' ? 'flex' : 'none';
+                document.getElementById('modalNotificationId').value = button.dataset.id;
+                document.getElementById('modalHouseId').value = button.dataset.houseId;
+                document.getElementById('modalSenderId').value = button.dataset.senderId;
 
-            document.getElementById('actionModal').style.display = 'block';
+                const actionForm = document.querySelector('.modal-actions');
+                // Show approve/decline buttons only if status is forwarded
+                actionForm.style.display = button.dataset.status === 'forwarded' ? 'flex' : 'none';
+
+                document.getElementById('actionModal').style.display = 'block';
+
+                // Hide government modal if open
+                document.getElementById('govNoticeModal').style.display = 'none';
+            }
         });
     });
 
-    document.querySelector('.close').onclick = () => {
-        document.getElementById('actionModal').style.display = 'none';
-    };
+    // Close buttons for rental requests modal
+    document.querySelectorAll('.close').forEach(closeBtn => {
+        closeBtn.onclick = () => {
+            document.getElementById('actionModal').style.display = 'none';
+            document.getElementById('govNoticeModal').style.display = 'none';
+        };
+    });
 
+    // Close modals when clicking outside modal content
     window.onclick = event => {
-        const modal = document.getElementById('actionModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
+        const actionModal = document.getElementById('actionModal');
+        const govNoticeModal = document.getElementById('govNoticeModal');
+
+        if (event.target === actionModal) {
+            actionModal.style.display = 'none';
+        }
+        if (event.target === govNoticeModal) {
+            govNoticeModal.style.display = 'none';
         }
     };
 
     // Optional: Add filter logic for notifications table here (if you want)
 });
+
+
+
 </script>
 </body>
 </html>
