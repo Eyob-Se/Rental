@@ -1,5 +1,10 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'property_manager') {
@@ -65,107 +70,107 @@ foreach ($payment_notifications as $note) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>Your Notifications</title>
-<link rel="stylesheet" href="../assets/style1.css" />
+    <meta charset="UTF-8" />
+    <title>Your Notifications</title>
+    <link rel="stylesheet" href="../assets/style1.css" />
 </head>
+
 <body>
 
-<div class="prop_con">
-    <div class="navbar prop_nav">
-        <p>Rental.</p>
-        <ul>
-            <li><a href="notifications.php">Notifications</a></li>
-            <li><a href="review_request.php">Requests</a></li>
-            <li><a href="review_house.php">Approvals</a></li>
-            <li><a href="lease-agreements.php">Agreements</a></li>
-            <li><a href="generate_report.php">Report</a></li>
-        </ul>
-        <button class="btn" onclick="window.location.href='../auth/logout.php'">Logout</button>
-    </div>
+    <div class="prop_con">
+        <div class="navbar prop_nav">
+            <p>Rental.</p>
+            <ul>
+                <li><a href="notifications.php">Notifications</a></li>
+                <li><a href="review_request.php">Requests</a></li>
+                <li><a href="review_house.php">Approvals</a></li>
+                <li><a href="lease-agreements.php">Agreements</a></li>
+                <li><a href="generate_report.php">Report</a></li>
+            </ul>
+            <button class="btn" onclick="window.location.href='../auth/logout.php'">Logout</button>
+        </div>
 
-    <div class="container">
-        <button class="btn" onclick="window.location.href='dashboard.php'">Back to dashboard</button>
+        <div class="container">
+            <button class="btn" onclick="window.location.href='dashboard.php'">Back to dashboard</button>
 
-        <div class="notif-section">
-            <h2> Payment Verifications</h2>
-            <ul class="notif-list">
-                <?php if (count($payment_notifications) > 0): ?>
+            <div class="notif-section">
+                <h2> Payment Verifications</h2>
+                <ul class="notif-list">
+                    <?php if (count($payment_notifications) > 0): ?>
                     <?php foreach ($payment_notifications as $note): ?>
-                        <li class="<?= $note['is_read'] ? 'read' : 'unread' ?>">
-                            <?= htmlspecialchars($note['message']) ?>
-                            <br>
-                            <small><em><?= date("M d, Y h:i A", strtotime($note['created_at'])) ?></em></small>
+                    <li class="<?= $note['is_read'] ? 'read' : 'unread' ?>">
+                        <?= htmlspecialchars($note['message']) ?>
+                        <br>
+                        <small><em><?= date("M d, Y h:i A", strtotime($note['created_at'])) ?></em></small>
 
-                            <?php if (isset($payments_data[$note['id']])): ?>
-                                <button class="btn-verify" 
-                                    data-noteid="<?= $note['id'] ?>"
-                                    data-house="<?= htmlspecialchars($payments_data[$note['id']]['house']['title']) ?>"
-                                    data-location="<?= htmlspecialchars($payments_data[$note['id']]['house']['location']) ?>"
-                                    data-amount="<?= number_format($payments_data[$note['id']]['payment']['amount'], 2) ?>"
-                                    data-fee="<?= number_format($payments_data[$note['id']]['payment']['fee'] ?? 0, 2) ?>"
-                                    data-total="<?= number_format($payments_data[$note['id']]['payment']['amount'] + ($payments_data[$note['id']]['payment']['fee'] ?? 0), 2) ?>"
-                                    data-receipt="/Rental/uploads/receipts/<?= htmlspecialchars($payments_data[$note['id']]['payment']['file_path']) ?>"
-                                    data-tenantid="<?= $payments_data[$note['id']]['tenant_id'] ?>"
-                                    data-paymentid="<?= $payments_data[$note['id']]['payment']['id'] ?>"
-                                >Review</button>
-                            <?php else: ?>
-                                <span style="color: gray; margin-left: 10px;">No unverified payment found</span>
-                            <?php endif; ?>
-                        </li>
+                        <?php if (isset($payments_data[$note['id']])): ?>
+                        <button class="btn-verify" data-noteid="<?= $note['id'] ?>"
+                            data-house="<?= htmlspecialchars($payments_data[$note['id']]['house']['title']) ?>"
+                            data-location="<?= htmlspecialchars($payments_data[$note['id']]['house']['location']) ?>"
+                            data-amount="<?= number_format($payments_data[$note['id']]['payment']['amount'], 2) ?>"
+                            data-fee="<?= number_format($payments_data[$note['id']]['payment']['fee'] ?? 0, 2) ?>"
+                            data-total="<?= number_format($payments_data[$note['id']]['payment']['amount'] + ($payments_data[$note['id']]['payment']['fee'] ?? 0), 2) ?>"
+                            data-receipt="/Rental/uploads/receipts/<?= htmlspecialchars($payments_data[$note['id']]['payment']['file_path']) ?>"
+                            data-tenantid="<?= $payments_data[$note['id']]['tenant_id'] ?>"
+                            data-paymentid="<?= $payments_data[$note['id']]['payment']['id'] ?>">Review</button>
+                        <?php else: ?>
+                        <span style="color: gray; margin-left: 10px;">No unverified payment found</span>
+                        <?php endif; ?>
+                    </li>
                     <?php endforeach; ?>
-                <?php else: ?>
+                    <?php else: ?>
                     <li>No payment-related notifications.</li>
-                <?php endif; ?>
-            </ul>
-        </div>
-
-        <div class="notif-section">
-            <h2> General Notifications</h2>
-            <ul class="notif-list">
-                <?php if (count($general_notifications) > 0): ?>
-                    <?php foreach ($general_notifications as $note): ?>
-                        <li class="<?= $note['is_read'] ? 'read' : 'unread' ?>">
-                            <?= htmlspecialchars($note['message']) ?>
-                            <br>
-                            <small><em><?= date("M d, Y h:i A", strtotime($note['created_at'])) ?></em></small>
-                        </li>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <li>No general notifications.</li>
-                <?php endif; ?>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- Modal -->
-<div class="modal" id="verifyModal">
-    <div class="modal-content">
-        <span class="close-btn" id="modalClose">&times;</span>
-        <h3>Payment Verification</h3>
-        <p><strong>House:</strong> <span id="modalHouse"></span></p>
-        <p><strong>Location:</strong> <span id="modalLocation"></span></p>
-        <p><strong>Amount:</strong> $<span id="modalAmount"></span></p>
-        <p><strong>Fee:</strong> $<span id="modalFee"></span></p>
-        <p><strong>Total:</strong> $<span id="modalTotal" style="color:green;"></span></p>
-        <p><strong>Receipt:</strong></p>
-        <img src="" alt="Payment Receipt" id="modalReceiptImg" class="receipt-img" />
-
-        <form method="post" action="verify_payment_action.php" id="verifyForm">
-            <input type="hidden" name="payment_id" id="paymentIdInput" />
-            <input type="hidden" name="notification_id" id="notificationIdInput" />
-            <div class="action-buttons">
-            <button type="button" onclick="submitAction('verify')">Verify</button>
-            <button type="button" onclick="submitAction('reject')">Decline</button>
-
+                    <?php endif; ?>
+                </ul>
             </div>
-        </form>
-    </div>
-</div>
 
-<script>
+            <div class="notif-section">
+                <h2> General Notifications</h2>
+                <ul class="notif-list">
+                    <?php if (count($general_notifications) > 0): ?>
+                    <?php foreach ($general_notifications as $note): ?>
+                    <li class="<?= $note['is_read'] ? 'read' : 'unread' ?>">
+                        <?= htmlspecialchars($note['message']) ?>
+                        <br>
+                        <small><em><?= date("M d, Y h:i A", strtotime($note['created_at'])) ?></em></small>
+                    </li>
+                    <?php endforeach; ?>
+                    <?php else: ?>
+                    <li>No general notifications.</li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="verifyModal">
+        <div class="modal-content">
+            <span class="close-btn" id="modalClose">&times;</span>
+            <h3>Payment Verification</h3>
+            <p><strong>House:</strong> <span id="modalHouse"></span></p>
+            <p><strong>Location:</strong> <span id="modalLocation"></span></p>
+            <p><strong>Amount:</strong> $<span id="modalAmount"></span></p>
+            <p><strong>Fee:</strong> $<span id="modalFee"></span></p>
+            <p><strong>Total:</strong> $<span id="modalTotal" style="color:green;"></span></p>
+            <p><strong>Receipt:</strong></p>
+            <img src="" alt="Payment Receipt" id="modalReceiptImg" class="receipt-img" />
+
+            <form method="post" action="verify_payment_action.php" id="verifyForm">
+                <input type="hidden" name="payment_id" id="paymentIdInput" />
+                <input type="hidden" name="notification_id" id="notificationIdInput" />
+                <div class="action-buttons">
+                    <button type="button" onclick="submitAction('verify')">Verify</button>
+                    <button type="button" onclick="submitAction('reject')">Decline</button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
     // Get modal and close button
     const modal = document.getElementById('verifyModal');
     const modalClose = document.getElementById('modalClose');
@@ -198,61 +203,62 @@ foreach ($payment_notifications as $note) {
             modal.style.display = 'block';
         });
     });
-</script>
-<script>
-function verifyOrRejectPayment(transactionId, action) {
-    if (!['verify', 'reject'].includes(action)) return;
+    </script>
+    <script>
+    function verifyOrRejectPayment(transactionId, action) {
+        if (!['verify', 'reject'].includes(action)) return;
 
-    fetch('verify_payment_action.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `transaction_id=${encodeURIComponent(transactionId)}&action=${encodeURIComponent(action)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === 'success') {
-            alert(data.message);  // Popup with success message
+        fetch('verify_payment_action.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `transaction_id=${encodeURIComponent(transactionId)}&action=${encodeURIComponent(action)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message); // Popup with success message
 
-            // After user closes alert, reload or redirect back
-            location.reload(); // reloads current page to reflect changes
-            // OR
-            // window.location.href = 'property_manager_dashboard.php'; // redirect to specific page
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(() => alert('Request failed. Please try again.'));
-}
-</script>
-<script>
-function submitAction(action) {
-    const transactionId = document.getElementById('paymentIdInput').value;
-
-    if (!transactionId || !['verify', 'reject'].includes(action)) {
-        alert("Invalid action or missing transaction.");
-        return;
+                    // After user closes alert, reload or redirect back
+                    location.reload(); // reloads current page to reflect changes
+                    // OR
+                    // window.location.href = 'property_manager_dashboard.php'; // redirect to specific page
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(() => alert('Request failed. Please try again.'));
     }
+    </script>
+    <script>
+    function submitAction(action) {
+        const transactionId = document.getElementById('paymentIdInput').value;
 
-    fetch('verify_payment_action.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `transaction_id=${encodeURIComponent(transactionId)}&action=${encodeURIComponent(action)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert(data.message);
-        location.reload(); // Refresh the page to show updated status
-    })
-    .catch(() => {
-        alert('Request failed. Please try again.');
-    });
-}
-</script>
+        if (!transactionId || !['verify', 'reject'].includes(action)) {
+            alert("Invalid action or missing transaction.");
+            return;
+        }
+
+        fetch('verify_payment_action.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `transaction_id=${encodeURIComponent(transactionId)}&action=${encodeURIComponent(action)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload(); // Refresh the page to show updated status
+            })
+            .catch(() => {
+                alert('Request failed. Please try again.');
+            });
+    }
+    </script>
 
 
 </body>
+
 </html>

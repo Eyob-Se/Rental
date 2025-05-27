@@ -1,5 +1,10 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 // Check if user is logged in and role = property_manager
@@ -55,42 +60,48 @@ $houses = $stmt->fetchAll();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>Property Manager - House Approvals</title>
+    <meta charset="UTF-8" />
+    <title>Property Manager - House Approvals</title>
 </head>
+
 <body>
-<div class="container">
-              <button class="btn" onclick="window.location.href='dashboard.php'">Back to dashboard</button>
+    <div class="container">
+        <button class="btn" onclick="window.location.href='dashboard.php'">Back to dashboard</button>
 
-  <h1>Pending House Approvals</h1>
+        <h1>Pending House Approvals</h1>
 
-  <?php if (isset($_SESSION['success'])): ?>
-    <div class="message"><?= htmlspecialchars($_SESSION['success']) ?></div>
-    <?php unset($_SESSION['success']); ?>
-  <?php endif; ?>
+        <?php if (isset($_SESSION['success'])): ?>
+        <div class="message"><?= htmlspecialchars($_SESSION['success']) ?></div>
+        <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
 
-  <?php if (count($houses) === 0): ?>
-    <p>No pending houses for approval.</p>
-  <?php else: ?>
-    <?php foreach ($houses as $house): ?>
-      <div class="house-card">
-        <img src="../uploads/house_images/<?= htmlspecialchars($house['image_path']) ?>" alt="House Image" class="house-image" />
-        <div class="house-info">
-          <h3><?= htmlspecialchars($house['title']) ?></h3>
-          <p><strong>Owner:</strong> <?= htmlspecialchars($house['owner_name']) ?></p>
-          <p><strong>Address:</strong> <?= htmlspecialchars($house['address']) ?></p>
-          <p><strong>Price:</strong> $<?= number_format($house['price'], 2) ?></p>
-          <p><?= nl2br(htmlspecialchars($house['description'])) ?></p>
-          <form method="POST" class="actions">
-            <input type="hidden" name="house_id" value="<?= $house['id'] ?>">
-            <button type="submit" name="action" value="approve" class="approve-btn" onclick="return confirm('Approve this house?');">Approve</button>
-            <button type="submit" name="action" value="decline" class="decline-btn" onclick="return confirm('Decline this house?');">Decline</button>
-          </form>
+        <?php if (count($houses) === 0): ?>
+        <p>No pending houses for approval.</p>
+        <?php else: ?>
+        <?php foreach ($houses as $house): ?>
+        <div class="house-card">
+            <img src="../uploads/house_images/<?= htmlspecialchars($house['image_path']) ?>" alt="House Image"
+                class="house-image" />
+            <div class="house-info">
+                <h3><?= htmlspecialchars($house['title']) ?></h3>
+                <p><strong>Owner:</strong> <?= htmlspecialchars($house['owner_name']) ?></p>
+                <p><strong>Address:</strong> <?= htmlspecialchars($house['address']) ?></p>
+                <p><strong>Price:</strong> $<?= number_format($house['price'], 2) ?></p>
+                <p><?= nl2br(htmlspecialchars($house['description'])) ?></p>
+                <form method="POST" class="actions">
+                    <input type="hidden" name="house_id" value="<?= $house['id'] ?>">
+                    <button type="submit" name="action" value="approve" class="approve-btn"
+                        onclick="return confirm('Approve this house?');">Approve</button>
+                    <button type="submit" name="action" value="decline" class="decline-btn"
+                        onclick="return confirm('Decline this house?');">Decline</button>
+                </form>
+            </div>
         </div>
-      </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
-</div>
+        <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
 </body>
+
 </html>

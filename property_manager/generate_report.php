@@ -1,5 +1,10 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'property_manager') {
@@ -65,70 +70,77 @@ $owners = $ownerStmt->fetchAll(PDO::FETCH_ASSOC);
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <title>Generate Report</title>
     <link rel="stylesheet" href="../assets/style1.css" />
     <style>
-        table {
-            color: #f4f4f4;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            width: 100%;
-        }
-        th, td {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        th {
-            color: black;
-            background-color: #f4f4f4;
-        }
-        h3 {
-            margin-top: 40px;
-        }
-        form label{
-            color: #f4f4f4;
-        }
+    table {
+        color: #f4f4f4;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+        width: 100%;
+    }
+
+    th,
+    td {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    th {
+        color: black;
+        background-color: #f4f4f4;
+    }
+
+    h3 {
+        margin-top: 40px;
+    }
+
+    form label {
+        color: #f4f4f4;
+    }
     </style>
 </head>
+
 <body>
-<div class="prop_con">
-    <div class="navbar prop_nav">
-        <p>Rental.</p>
-        <ul>
-            <li><a href="notifications.php">Notifications</a></li>
-            <li><a href="review_request.php">Requests</a></li>
-            <li><a href="review_house.php">Approvals</a></li>
-            <li><a href="lease-agreements.php">Agreements</a></li>
-            <li><a href="generate_report.php">Reports</a></li>
-        </ul>
-        <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
-    </div>
+    <div class="prop_con">
+        <div class="navbar prop_nav">
+            <p>Rental.</p>
+            <ul>
+                <li><a href="notifications.php">Notifications</a></li>
+                <li><a href="review_request.php">Requests</a></li>
+                <li><a href="review_house.php">Approvals</a></li>
+                <li><a href="lease-agreements.php">Agreements</a></li>
+                <li><a href="generate_report.php">Reports</a></li>
+            </ul>
+            <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
+        </div>
 
-    <div class="container">
-        <h2>Generate Report</h2>
+        <div class="container">
+            <h2>Generate Report</h2>
 
-        <?php if ($reportMessage): ?>
+            <?php if ($reportMessage): ?>
             <p style="color: <?= str_starts_with($reportMessage, '✅') ? 'green' : 'red' ?>;">
                 <?= htmlspecialchars($reportMessage) ?>
             </p>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <h3>Tenants</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Houses Rented</th>
-                    <th>Lease Agreements Signed</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($tenants as $tenant): ?>
+            <h3>Tenants</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Houses Rented</th>
+                        <th>Lease Agreements Signed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($tenants as $tenant): ?>
                     <tr>
                         <td><?= htmlspecialchars($tenant['user_id']) ?></td>
                         <td><?= htmlspecialchars($tenant['name']) ?></td>
@@ -136,26 +148,26 @@ $owners = $ownerStmt->fetchAll(PDO::FETCH_ASSOC);
                         <td><?= htmlspecialchars($tenant['houses_rented']) ?></td>
                         <td><?= htmlspecialchars($tenant['lease_agreements_signed']) ?></td>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
 
-        <h3>Owners</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Phone</th>
-                    <th>Bank</th>
-                    <th>Bank Account</th>
-                    <th>Houses Posted</th>
-                    <th>Houses Approved</th>
-                    <th>Houses Rented</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($owners as $owner): ?>
+            <h3>Owners</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Bank</th>
+                        <th>Bank Account</th>
+                        <th>Houses Posted</th>
+                        <th>Houses Approved</th>
+                        <th>Houses Rented</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($owners as $owner): ?>
                     <tr>
                         <td><?= htmlspecialchars($owner['user_id']) ?></td>
                         <td><?= htmlspecialchars($owner['name']) ?></td>
@@ -166,20 +178,21 @@ $owners = $ownerStmt->fetchAll(PDO::FETCH_ASSOC);
                         <td><?= htmlspecialchars($owner['houses_approved']) ?></td>
                         <td><?= htmlspecialchars($owner['houses_rented']) ?></td>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
 
-        <form method="POST" class="report-form">
-            <label for="subject">Subject:</label><br>
-            <input type="text" name="subject" id="subject" required><br><br>
+            <form method="POST" class="report-form">
+                <label for="subject">Subject:</label><br>
+                <input type="text" name="subject" id="subject" required><br><br>
 
-            <label for="description">Description:</label><br>
-            <textarea name="description" id="description" rows="5" required></textarea><br><br>
+                <label for="description">Description:</label><br>
+                <textarea name="description" id="description" rows="5" required></textarea><br><br>
 
-            <button class="btn" type="submit">Submit Report</button>
-        </form>
+                <button class="btn" type="submit">Submit Report</button>
+            </form>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

@@ -1,4 +1,9 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 if (!isset($_GET['lease_id'])) {
@@ -46,30 +51,31 @@ try {
 
     // Output ONLY the inner content for the modal, no buttons or checkboxes here
     ?>
-    <div>
-        <h4>Lease Agreement for <?= htmlspecialchars($lease['house_title']) ?></h4>
-        <p><strong>Tenant Name:</strong> <?= htmlspecialchars($lease['tenant_name']) ?></p>
-        <p><strong>Email:</strong> <?= htmlspecialchars($lease['tenant_email']) ?></p>
-        <p><strong>Lease Date:</strong> <?= date("F j, Y", strtotime($lease['lease_date'])) ?></p>
-        <p><strong>Payment Date:</strong> <?= date("F j, Y", strtotime($lease['payment_date'])) ?></p>
-        <p><strong>ID Photo:</strong><br>
-            <img src="../uploads/id_photos/<?= htmlspecialchars($lease['tenant_id_photo']) ?>" alt="Tenant ID" width="200" />
-        </p>
-        <hr>
-        <h3>Terms and Conditions</h3>
-        <h4>Lease Terms:</h4>
-        <p>This lease agreement is entered into by the above tenant and the property management company.</p>
-        <ul>
-            <li>Lease Duration: 3 months</li>
-            <li>Rent: Payable every 3 months as well as updating lease</li>
-            <li>Tenant must not sublet the property</li>
-            <li>Property must be kept clean and damage-free</li>
-        </ul>
-        <div style="margin-bottom: 20px;">
-            <?= $terms ?>
-        </div>
+<div>
+    <h4>Lease Agreement for <?= htmlspecialchars($lease['house_title']) ?></h4>
+    <p><strong>Tenant Name:</strong> <?= htmlspecialchars($lease['tenant_name']) ?></p>
+    <p><strong>Email:</strong> <?= htmlspecialchars($lease['tenant_email']) ?></p>
+    <p><strong>Lease Date:</strong> <?= date("F j, Y", strtotime($lease['lease_date'])) ?></p>
+    <p><strong>Payment Date:</strong> <?= date("F j, Y", strtotime($lease['payment_date'])) ?></p>
+    <p><strong>ID Photo:</strong><br>
+        <img src="../uploads/id_photos/<?= htmlspecialchars($lease['tenant_id_photo']) ?>" alt="Tenant ID"
+            width="200" />
+    </p>
+    <hr>
+    <h3>Terms and Conditions</h3>
+    <h4>Lease Terms:</h4>
+    <p>This lease agreement is entered into by the above tenant and the property management company.</p>
+    <ul>
+        <li>Lease Duration: 3 months</li>
+        <li>Rent: Payable every 3 months as well as updating lease</li>
+        <li>Tenant must not sublet the property</li>
+        <li>Property must be kept clean and damage-free</li>
+    </ul>
+    <div style="margin-bottom: 20px;">
+        <?= $terms ?>
     </div>
-    <?php
+</div>
+<?php
 
 } catch (PDOException $e) {
     http_response_code(500);

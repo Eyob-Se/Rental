@@ -1,4 +1,9 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 $owner_id = intval($_GET['owner_id'] ?? 0);
@@ -11,4 +16,3 @@ echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 var_dump($result);
 exit;
-

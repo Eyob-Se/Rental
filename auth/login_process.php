@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once '../config/db.php';
 
@@ -6,11 +10,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ? AND status = 'active'");
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user['password'])) {
+    if ($user) {
+        if (!password_verify($password, $user['password'])) {
+            $_SESSION['error'] = "Invalid email or password.";
+            header("Location: login.php");
+            exit;
+        }
+
+        if ($user['status'] !== 'active') {
+            $_SESSION['error'] = "Account is inactive. Please contact support.";
+            header("Location: login.php");
+            exit;
+        }
+
         // Store user info in session
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
@@ -39,10 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         exit;
     } else {
-        $_SESSION['error'] = "Invalid email or password, or account inactive.";
+        $_SESSION['error'] = "Invalid email or password.";
         header("Location: login.php");
         exit;
     }
 } else {
     die("Invalid request.");
 }
+?>

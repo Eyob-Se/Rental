@@ -1,5 +1,10 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'property_manager') {
@@ -18,6 +23,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>PM Dashboard</title>
@@ -25,42 +31,44 @@ try {
     <link rel="stylesheet" href="../assets/style1.css" />
     <link rel="stylesheet" href="../assets/fonts/all.css" />
 </head>
+
 <body>
-<div class="prop_con">
+    <div class="prop_con">
 
-    <div class="navbar prop_nav">
-        <p>Rental.</p>
-        <ul>
-            <li><a href="notifications.php">Notifications</a></li>
-            <li><a href="review_request.php">Requests</a></li>
-            <li><a href="review_house.php">Approvals</a></li>
-            <li><a href="lease-agreements.php">Agreements</a></li>
+        <div class="navbar prop_nav">
+            <p>Rental.</p>
+            <ul>
+                <li><a href="notifications.php">Notifications</a></li>
+                <li><a href="review_request.php">Requests</a></li>
+                <li><a href="review_house.php">Approvals</a></li>
+                <li><a href="lease-agreements.php">Agreements</a></li>
                 <li><a href="generate_report.php">Report</a></li>
-        </ul>
-        <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
+            </ul>
+            <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
+        </div>
+
+        <div class="container">
+            <h2>Welcome, Property Manager</h2>
+            <p>Dashboard overview</p>
+
+            <div class="card">
+                <h3>Pending Houses: <?= $pendingHouses ?></h3><br>
+
+            </div>
+
+            <div class="card">
+                <h3>Pending Tenant Requests: <?= $pendingRequests ?></h3><br>
+
+            </div>
+
+            <div class="card">
+                <h3>Reports Sent: <?= $reports ?></h3><br>
+
+            </div>
+        </div>
+
     </div>
-
-    <div class="container">
-        <h2>Welcome, Property Manager</h2>
-        <p>Dashboard overview</p>
-
-        <div class="card">
-            <h3>Pending Houses: <?= $pendingHouses ?></h3><br>
-
-        </div>
-
-        <div class="card">
-            <h3>Pending Tenant Requests: <?= $pendingRequests ?></h3><br>
-
-        </div>
-
-        <div class="card">
-            <h3>Reports Sent: <?= $reports ?></h3><br>
-            
-        </div>
-    </div>
-
-</div>
-<script src="../../assets/main.js"></script>
+    <script src="../../assets/main.js"></script>
 </body>
+
 </html>
