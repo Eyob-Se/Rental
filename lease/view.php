@@ -1,5 +1,10 @@
 <?php
-session_start();
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
+include_once '../config/auth_check.php'; // Ensure user is logged in
 require_once '../config/db.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -45,9 +50,9 @@ $leases = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <td><?= $lease['signed_by_owner'] ? 'Yes' : 'No' ?></td>
         <td>
             <?php if ($lease['file_path'] && file_exists($lease['file_path'])): ?>
-                <a href="<?= htmlspecialchars($lease['file_path']) ?>" target="_blank">View PDF</a>
+            <a href="<?= htmlspecialchars($lease['file_path']) ?>" target="_blank">View PDF</a>
             <?php else: ?>
-                No file uploaded
+            No file uploaded
             <?php endif; ?>
         </td>
         <td><?= htmlspecialchars($lease['created_at']) ?></td>

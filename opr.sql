@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 27, 2025 at 03:17 AM
+-- Generation Time: May 27, 2025 at 05:50 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -50,7 +50,7 @@ CREATE TABLE `houses` (
 
 INSERT INTO `houses` (`id`, `owner_id`, `title`, `location`, `bedrooms`, `bathrooms`, `area`, `description`, `price`, `status`, `image_path`, `created_at`, `property_manager_id`, `is_rented`) VALUES
 (6, 8, 'Apartment', 'Bole', 2, 2, 3212, NULL, 21321.00, 'approved', '1748145571_h2.jpg', '2025-05-25 03:59:31', 9, 1),
-(7, 8, 'Apartment', 'Mexico', 3, 2, 3500, 'New House', 20000.00, 'approved', '1748145871_h1.jpg', '2025-05-25 04:04:31', 9, 0),
+(7, 8, 'Apartment', 'Mexico', 3, 2, 3500, 'New House', 20000.00, 'approved', '1748145871_h1.jpg', '2025-05-25 04:04:31', 9, 1),
 (8, 8, 'Apartment', 'Lafto', 2, 1, 1500, 'New House', 15000.00, 'approved', '1748146181_h3.jpg', '2025-05-25 04:09:41', 9, 1),
 (9, 8, 'Apartment', 'Kera', 3, 1, 1809, 'New house', 21222.00, 'approved', '1748146324_h4.jpg', '2025-05-25 04:12:04', 9, 1),
 (10, 8, 'Condominium', 'Addis Ababa, Tafo', 3, 1, 1000, 'located at tafo ', 20000.00, 'approved', '1748274327_g1.jpg', '2025-05-26 15:45:27', 9, 1);
@@ -81,7 +81,8 @@ CREATE TABLE `lease_agreements` (
 INSERT INTO `lease_agreements` (`id`, `house_id`, `tenant_id`, `owner_id`, `signed_by_tenant`, `signed_by_owner`, `file_path`, `created_at`, `status`, `signed_at`) VALUES
 (1, 9, 11, 8, 1, 0, 'lease_9_11_1748260463.txt', '2025-05-26 11:54:23', 'signed', '2025-05-26 19:46:11'),
 (2, 6, 11, 8, 1, 1, 'leases/lease_6_11_1748285366.pdf', '2025-05-26 15:35:15', 'signed', '2025-05-26 21:49:26'),
-(3, 10, 11, 8, 1, 1, NULL, '2025-05-26 15:53:02', 'signed', '2025-05-26 21:13:34');
+(3, 10, 11, 8, 1, 1, NULL, '2025-05-26 15:53:02', 'signed', '2025-05-26 21:13:34'),
+(4, 7, 22, 8, 1, 1, 'leases/lease_7_22_1748357158.pdf', '2025-05-27 14:44:02', 'signed', '2025-05-27 17:45:58');
 
 -- --------------------------------------------------------
 
@@ -127,7 +128,10 @@ INSERT INTO `notifications` (`id`, `sender_id`, `receiver_id`, `message`, `is_re
 (77, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-26 15:52:17', 'response', 'approved', 10),
 (78, 11, 9, 'New unverified payment receipt uploaded for House ID: 10.', 0, '2025-05-26 15:52:42', 'request', 'unverified', 10),
 (79, 9, 11, 'A lease agreement has been generated for House: Condominium. Please sign it.', 0, '2025-05-26 15:53:02', 'lease', 'pending', 10),
-(80, 13, 8, 'you should pay', 0, '2025-05-26 21:45:40', 'government_notice', 'pending', NULL);
+(80, 13, 8, 'you should pay', 0, '2025-05-26 21:45:40', 'government_notice', 'pending', NULL),
+(81, 22, 9, 'I would like to rent this house.', 0, '2025-05-27 14:30:41', 'request', 'pending', 7),
+(82, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-27 14:41:22', 'response', 'approved', 7),
+(83, 22, 9, 'New unverified payment receipt uploaded for House ID: 7.', 0, '2025-05-27 14:42:44', 'request', 'unverified', 7);
 
 -- --------------------------------------------------------
 
@@ -181,7 +185,8 @@ INSERT INTO `rental_requests` (`id`, `tenant_id`, `house_id`, `status`, `created
 (19, 11, 8, 'approved', '2025-05-26 03:39:33', NULL, NULL, 9),
 (20, 11, 7, 'declined', '2025-05-26 05:12:04', NULL, NULL, 9),
 (21, 11, 9, 'approved', '2025-05-26 05:12:08', NULL, NULL, 9),
-(22, 11, 10, 'approved', '2025-05-26 15:47:06', NULL, NULL, 9);
+(22, 11, 10, 'approved', '2025-05-26 15:47:06', NULL, NULL, 9),
+(23, 22, 7, 'approved', '2025-05-27 14:30:41', NULL, NULL, 9);
 
 -- --------------------------------------------------------
 
@@ -209,8 +214,39 @@ CREATE TABLE `reports_for_admin` (
   `property_manager_id` int(11) NOT NULL,
   `subject` text NOT NULL,
   `description` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `is_read` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `reports_for_admin`
+--
+
+INSERT INTO `reports_for_admin` (`id`, `property_manager_id`, `subject`, `description`, `created_at`, `is_read`) VALUES
+(3, 9, 'delete a user for me', 'ax', '2025-05-27 15:04:13', 1),
+(4, 9, 'sdfghjk', 'hello', '2025-05-27 15:20:43', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `security`
+--
+
+CREATE TABLE `security` (
+  `id` int(11) NOT NULL,
+  `question` varchar(255) NOT NULL,
+  `answer` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `security`
+--
+
+INSERT INTO `security` (`id`, `question`, `answer`, `user_id`) VALUES
+(1, 'pet', '$2y$10$NYAY8s4INcZ7MZyATYhIY.faRHGYc6E0yY1nKJC3MhKJX0kJAqRFm', 20),
+(2, 'What is the name of your first pet?', '$2y$10$EPAUdJm/7VkeNGdQRVgW3.ZJLVkW.iUEtwQJlpqs.RHqwcq87AzSC', 21),
+(3, 'What is the name of your first pet?', '$2y$10$Zh2.F1IIGJZRwLSG4A/B0O27kWy9GJIiuMv8GHqECew5xyg2VoIou', 22);
 
 -- --------------------------------------------------------
 
@@ -231,7 +267,10 @@ CREATE TABLE `tenant_profiles` (
 
 INSERT INTO `tenant_profiles` (`user_id`, `phone`, `address`, `id_photo`) VALUES
 (11, '091233433', 'Adiss Ababa', '1013b56c032e5cbf76582a116160e227.jpg'),
-(12, '0911153000', 'Adiss ababa', '940ab44d0a9b70836163f78d89e64a34.png');
+(12, '0911153000', 'Adiss ababa', '940ab44d0a9b70836163f78d89e64a34.png'),
+(20, '0911111111', 'demo', '194300a1441eadca83671d2db2d392e4.jpg'),
+(21, '0976543211', 'addis ababa', '5d136e8e9af2c62263fab93da7dd0081.jpg'),
+(22, '0987654321', 'beso', '089c44bee04c9055e8fa6134bf36c9a7.jpg');
 
 -- --------------------------------------------------------
 
@@ -260,7 +299,8 @@ INSERT INTO `transactions` (`id`, `tenant_id`, `house_id`, `amount`, `fee`, `tot
 (8, 11, 8, 15000.00, 1500.00, 16500.00, '2025-05-26 09:22:12', 'verified', 'receipt_683432c4d5711.png'),
 (9, 11, 9, 21222.00, 2122.20, 23344.20, '2025-05-26 11:53:56', 'verified', 'receipt_68345654b96bd.png'),
 (10, 11, 6, 21321.00, 2132.10, 23453.10, '2025-05-26 15:33:54', 'verified', 'receipt_683489e29edcd.png'),
-(11, 11, 10, 20000.00, 2000.00, 22000.00, '2025-05-26 15:52:42', 'verified', 'receipt_68348e4a20b02.png');
+(11, 11, 10, 20000.00, 2000.00, 22000.00, '2025-05-26 15:52:42', 'verified', 'receipt_68348e4a20b02.png'),
+(12, 22, 7, 20000.00, 2000.00, 22000.00, '2025-05-27 14:42:44', 'verified', 'receipt_6835cf64152f5.png');
 
 -- --------------------------------------------------------
 
@@ -294,7 +334,10 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`, `creat
 (16, 'bekele', 'bekele@gmail.com', '$2y$10$sKXCb7UBbdoSRRjsHHc6TOV9CngBWnErR7kGfynODcFSPuiWNsi.K', 'owner', 'active', '2025-05-26 22:44:12'),
 (17, 'lema', 'lema@gmail.com', '$2y$10$lvLM/r8A65bMXSSoejAxeuhUWgFP3k4hR3iKB5O0n3aXHPstc6iAe', 'owner', 'active', '2025-05-26 22:47:57'),
 (18, 'girma', 'girma@gmail.com', '$2y$10$49b7eyyeHx7.FGaggPTYZuhJJTHRSVssvruGqkq1qcPRKxfFjURKS', 'owner', 'active', '2025-05-26 22:50:07'),
-(19, 'spoiuh', 'ertyu@gmail.com', '$2y$10$IOEf.O2P6gL/Dfyi1wlV0u35dTjokTnL/KPXXsaN4jd.3uRMUA.K.', 'owner', 'active', '2025-05-26 22:55:42');
+(19, 'spoiuh', 'ertyu@gmail.com', '$2y$10$IOEf.O2P6gL/Dfyi1wlV0u35dTjokTnL/KPXXsaN4jd.3uRMUA.K.', 'owner', 'active', '2025-05-26 22:55:42'),
+(20, 'demo', 'demo@demo.com', '$2y$10$SFnST29771Qv7z7TuhjS6OALrmXUboS41pLYibNABVjWNASdnS6jS', 'tenant', 'active', '2025-05-27 12:14:40'),
+(21, 'eyob seleshi', 'eyob@seleshi.com', '$2y$10$ubaNnkSR/VI47Jcf7N3MkOvZfJ0txSFkwljph.aNRSXUVQqWDIDPO', 'tenant', 'active', '2025-05-27 13:36:56'),
+(22, 'abebe beso bela', 'abebe@beso.com', '$2y$10$2Vs/48AgmxlW.3PWOwdKVu4V7xZcFCOjklUxuz.Q1hY9FFCWrc/mW', 'tenant', 'active', '2025-05-27 14:29:01');
 
 --
 -- Indexes for dumped tables
@@ -354,6 +397,13 @@ ALTER TABLE `reports_for_admin`
   ADD KEY `property_manager_id` (`property_manager_id`);
 
 --
+-- Indexes for table `security`
+--
+ALTER TABLE `security`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
 -- Indexes for table `tenant_profiles`
 --
 ALTER TABLE `tenant_profiles`
@@ -388,19 +438,19 @@ ALTER TABLE `houses`
 -- AUTO_INCREMENT for table `lease_agreements`
 --
 ALTER TABLE `lease_agreements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=84;
 
 --
 -- AUTO_INCREMENT for table `rental_requests`
 --
 ALTER TABLE `rental_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `reports`
@@ -412,19 +462,25 @@ ALTER TABLE `reports`
 -- AUTO_INCREMENT for table `reports_for_admin`
 --
 ALTER TABLE `reports_for_admin`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `security`
+--
+ALTER TABLE `security`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Constraints for dumped tables
@@ -487,6 +543,12 @@ ALTER TABLE `reports`
 --
 ALTER TABLE `reports_for_admin`
   ADD CONSTRAINT `reports_for_admin_ibfk_1` FOREIGN KEY (`property_manager_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `security`
+--
+ALTER TABLE `security`
+  ADD CONSTRAINT `security_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `tenant_profiles`
