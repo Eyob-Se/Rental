@@ -9,30 +9,38 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-try {
-    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
-    $stmt->execute([$user_id]);
-    if ($stmt->fetchColumn() !== 'owner') {
-        die("Access denied.");
-    }
-
-    $stmt = $pdo->prepare("
-        SELECT rr.id AS request_id, rr.message, rr.status, rr.created_at,
-               rr.pm_id,
-               u.name AS sender_name,
-               h.id AS house_id, h.title AS house_title, h.bedrooms, h.bathrooms, h.area, h.price, h.image_path
-        FROM rental_requests rr
-        JOIN users u ON rr.tenant_id = u.id
-        JOIN houses h ON rr.house_id = h.id
-        WHERE h.owner_id = ? AND rr.status = 'forwarded'
-        ORDER BY rr.created_at DESC
-    ");
-    $stmt->execute([$user_id]);
-    $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (PDOException $e) {
-    die("Database error: " . $e->getMessage());
+// Check if user is owner
+$stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+if ($stmt->fetchColumn() !== 'owner') {
+    die("Access denied.");
 }
+
+// Fetch rental requests forwarded to this owner
+$stmt = $pdo->prepare("
+    SELECT rr.id AS request_id, rr.message, rr.status, rr.created_at,
+           rr.pm_id,
+           u.name AS sender_name,
+           h.id AS house_id, h.title AS house_title, h.bedrooms, h.bathrooms, h.area, h.price, h.image_path
+    FROM rental_requests rr
+    JOIN users u ON rr.tenant_id = u.id
+    JOIN houses h ON rr.house_id = h.id
+    WHERE h.owner_id = ? AND rr.status = 'forwarded'
+    ORDER BY rr.created_at DESC
+");
+$stmt->execute([$user_id]);
+$rentalRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch general notifications sent to this owner
+$stmt = $pdo->prepare("
+    SELECT n.*, u.name AS sender_name
+    FROM notifications n
+    JOIN users u ON n.sender_id = u.id
+    WHERE n.receiver_id = ?
+    ORDER BY n.created_at DESC
+");
+$stmt->execute([$user_id]);
+$generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,12 +53,11 @@ try {
 </head>
 <body>
 <div class="prop_con">
-
-    <!-- Navigation Bar -->
+    <!-- Navigation -->
     <div class="navbar prop_nav">
         <p>Rental.</p>
         <ul>
-            <li><a href="notifications.php">Notifications</a></li>
+            <li><a href="notifications.php" class="active">Notifications</a></li>
             <li><a href="dashboard.php">Houses</a></li>
         </ul>
         <button class="btn" onclick="window.location.href='../auth/logout.php'">Logout</button>
@@ -61,8 +68,9 @@ try {
             <input type="text" id="notificationFilter" placeholder="🔍 Filter notifications" />
         </div>
 
+        <!-- Rental Requests -->
         <section>
-            <h3>Notifications</h3>
+            <h3>Rental Requests</h3>
             <table class="user-table" id="notificationTable">
                 <thead>
                     <tr>
@@ -73,36 +81,61 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-<?php if (count($notifications) === 0): ?>
-    <tr><td colspan="4">No rental requests.</td></tr>
-<?php else: ?>
-    <?php foreach ($notifications as $note): ?>
-        <tr>
-            <td><?= htmlspecialchars($note['sender_name']) ?></td>
-            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
-            <td>Rental request received for house: <?= htmlspecialchars($note['house_title']) ?></td>
-            <td>
-                <button 
-                    class="btn open-modal" 
-                    data-id="<?= $note['request_id'] ?>" 
-                    data-sender="<?= htmlspecialchars($note['sender_name']) ?>" 
-                    data-sender-id="<?= $note['pm_id'] ?>" 
-                    data-message="Rental request for <?= htmlspecialchars($note['house_title']) ?>"
-                    data-house="<?= htmlspecialchars($note['house_title']) ?>"
-                    data-house-id="<?= $note['house_id'] ?>"
-                    data-bedrooms="<?= $note['bedrooms'] ?>"
-                    data-bathrooms="<?= $note['bathrooms'] ?>"
-                    data-area="<?= $note['area'] ?>"
-                    data-price="<?= $note['price'] ?>"
-                    data-image="<?= htmlspecialchars($note['image_path']) ?>"
-                    data-status="<?= $note['status'] ?>"
-                >
-                    <?= $note['status'] === 'forwarded' ? 'Respond' : 'View' ?>
-                </button>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-<?php endif; ?>
+                    <?php if (empty($rentalRequests)): ?>
+                        <tr><td colspan="4">No notifications.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($rentalRequests as $note): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($note['sender_name']) ?></td>
+                            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
+                            <td>Rental request received for house: <?= htmlspecialchars($note['house_title']) ?></td>
+                            <td>
+                                <button class="btn open-modal"
+                                    data-id="<?= $note['request_id'] ?>"
+                                    data-sender="<?= htmlspecialchars($note['sender_name']) ?>"
+                                    data-sender-id="<?= $note['pm_id'] ?>"
+                                    data-message="Rental request for <?= htmlspecialchars($note['house_title']) ?>"
+                                    data-house="<?= htmlspecialchars($note['house_title']) ?>"
+                                    data-house-id="<?= $note['house_id'] ?>"
+                                    data-bedrooms="<?= $note['bedrooms'] ?>"
+                                    data-bathrooms="<?= $note['bathrooms'] ?>"
+                                    data-area="<?= $note['area'] ?>"
+                                    data-price="<?= $note['price'] ?>"
+                                    data-image="<?= htmlspecialchars($note['image_path']) ?>"
+                                    data-status="<?= $note['status'] ?>">
+                                    Respond
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- General Notifications -->
+        <section>
+            <h3>General Notifications</h3>
+            <table class="user-table" id="generalNotificationTable">
+                <thead>
+                    <tr>
+                        <th>Sender</th>
+                        <th>Received</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($generalNotifications)): ?>
+                        <tr><td colspan="3">No notifications.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($generalNotifications as $note): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($note['sender_name']) ?></td>
+                            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
+                            <td><?= htmlspecialchars($note['message']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </section>
@@ -113,9 +146,9 @@ try {
 <div id="actionModal" class="modal" style="display:none;">
     <div class="modal-content">
         <span class="close">&times;</span>
-        <h3 style="color: #2b2d42;">Respond to Rental Request</h3>
-        <p style="color: #2b2d42;"><strong>Tenant:</strong> <span id="modalSender"></span></p>
-        <p style="color: #2b2d42;"><strong>Message:</strong> <span id="modalMessage"></span></p>
+        <h3>Respond to Rental Request</h3>
+        <p><strong>Tenant:</strong> <span id="modalSender"></span></p>
+        <p><strong>Message:</strong> <span id="modalMessage"></span></p>
         <p><strong>House:</strong> <span id="modalHouse"></span></p>
         <p><strong>Bedrooms:</strong> <span id="modalBedrooms"></span></p>
         <p><strong>Bathrooms:</strong> <span id="modalBathrooms"></span></p>
@@ -133,9 +166,9 @@ try {
     </div>
 </div>
 
-<script src="../../assets/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Modal logic
     document.querySelectorAll('.open-modal').forEach(button => {
         button.addEventListener('click', () => {
             document.getElementById('modalSender').textContent = button.dataset.sender;
@@ -151,10 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modalHouseId').value = button.dataset.houseId;
             document.getElementById('modalSenderId').value = button.dataset.senderId;
 
-            const actionForm = document.querySelector('.modal-actions');
-            // Show approve/decline buttons only if status is forwarded
-            actionForm.style.display = button.dataset.status === 'forwarded' ? 'flex' : 'none';
-
+            document.querySelector('.modal-actions').style.display = button.dataset.status === 'forwarded' ? 'flex' : 'none';
             document.getElementById('actionModal').style.display = 'block';
         });
     });
@@ -164,13 +194,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.onclick = event => {
-        const modal = document.getElementById('actionModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
+        if (event.target === document.getElementById('actionModal')) {
+            document.getElementById('actionModal').style.display = 'none';
         }
     };
 
-    // Optional: Add filter logic for notifications table here (if you want)
+    // Filter logic
+    const filterInput = document.getElementById('notificationFilter');
+    filterInput.addEventListener('input', () => {
+        const filter = filterInput.value.toLowerCase();
+        ['notificationTable', 'generalNotificationTable'].forEach(tableId => {
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(filter) ? '' : 'none';
+            });
+        });
+    });
 });
 </script>
 </body>

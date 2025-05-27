@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 26, 2025 at 09:00 PM
+-- Generation Time: May 27, 2025 at 03:17 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -126,7 +126,8 @@ INSERT INTO `notifications` (`id`, `sender_id`, `receiver_id`, `message`, `is_re
 (76, 11, 9, 'I would like to rent this house.', 0, '2025-05-26 15:47:07', 'request', 'pending', 10),
 (77, 8, 9, 'Owner has approved the rental request.', 0, '2025-05-26 15:52:17', 'response', 'approved', 10),
 (78, 11, 9, 'New unverified payment receipt uploaded for House ID: 10.', 0, '2025-05-26 15:52:42', 'request', 'unverified', 10),
-(79, 9, 11, 'A lease agreement has been generated for House: Condominium. Please sign it.', 0, '2025-05-26 15:53:02', 'lease', 'pending', 10);
+(79, 9, 11, 'A lease agreement has been generated for House: Condominium. Please sign it.', 0, '2025-05-26 15:53:02', 'lease', 'pending', 10),
+(80, 13, 8, 'you should pay', 0, '2025-05-26 21:45:40', 'government_notice', 'pending', NULL);
 
 -- --------------------------------------------------------
 
@@ -138,15 +139,21 @@ CREATE TABLE `owner_profiles` (
   `user_id` int(11) NOT NULL,
   `phone` varchar(15) NOT NULL,
   `address` text NOT NULL,
-  `id_photo` varchar(255) NOT NULL
+  `id_photo` varchar(255) NOT NULL,
+  `bank` text NOT NULL,
+  `account` varchar(25) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Dumping data for table `owner_profiles`
 --
 
-INSERT INTO `owner_profiles` (`user_id`, `phone`, `address`, `id_photo`) VALUES
-(8, '0098744456', 'adiss', 'b8d808edbed54581318e4d41092bb75c.jpg');
+INSERT INTO `owner_profiles` (`user_id`, `phone`, `address`, `id_photo`, `bank`, `account`) VALUES
+(8, '0098744456', 'adiss', 'b8d808edbed54581318e4d41092bb75c.jpg', '', '0'),
+(16, '1234567890', 'qwetryuhuk', '65949ef1a716d3a1bfbc976e1ed748d6.jpg', '', '0'),
+(17, '123456789', 'lema', '25f5f3e38f86a0fce8264507b03a39a5.jpg', '', '3456789098765'),
+(18, '123456789', 'girma1234', '6140b959d5d5efcf3a03e41dd5e3d45d.jpg', '', '34567898765'),
+(19, '98765432', 'aesrdtfyguhnk', '07fdcdc0d3154a9c675d6a8d27a1fcd7.jpg', 'dfgh', '23456789');
 
 -- --------------------------------------------------------
 
@@ -190,6 +197,20 @@ CREATE TABLE `reports` (
   `report_data` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reports_for_admin`
+--
+
+CREATE TABLE `reports_for_admin` (
+  `id` int(11) NOT NULL,
+  `property_manager_id` int(11) NOT NULL,
+  `subject` text NOT NULL,
+  `description` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -267,7 +288,13 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `status`, `creat
 (9, 'Ermi', 'manager@test.com', '$2y$10$S6gda.mS/ycyB7BHJ.3Lfu8O3.6drh4RhV7QDtq.0MB9pYdCP.cdW', 'property_manager', 'active', '2025-05-23 23:46:34'),
 (10, 'efrem', 'gov@et.com', '$2y$10$QLi8xKUAXbmXGlQyPBqdde90SDh1gkCM5kOT7AN6.T6UYcTQyVtom', 'government', 'active', '2025-05-24 00:16:06'),
 (11, 'eyob', 'ey@o.com', '$2y$10$Mq7RSclq5kvzcTf0RC.3fe62Jm6kJ.HjqckyiSqto66QOsp.GoueC', 'tenant', 'active', '2025-05-24 10:50:10'),
-(12, 'abiy', 'ab@y.com', '$2y$10$HIdlhBCc1COhREM3oDCyQuvvESxgTMW7w1CvFY3Fo6cYkJAQySWIq', 'tenant', 'active', '2025-05-25 04:31:00');
+(12, 'abiy', 'ab@y.com', '$2y$10$HIdlhBCc1COhREM3oDCyQuvvESxgTMW7w1CvFY3Fo6cYkJAQySWIq', 'tenant', 'active', '2025-05-25 04:31:00'),
+(13, 'admin', 'admin@rental.com', '$2y$10$sTCVnijQbPbSj4WadzUQMu.q41ZvvOxThdRq3SUv9Ki5cPryIMzYm', 'government', 'active', '2025-05-26 21:45:07'),
+(14, 'abebe', 'abebe@email.com', '$2y$10$r2WpKR.eC1tglytlWytp.OO.KUkaP154ROfojSXc8aMl9.0M.yz7W', 'owner', 'active', '2025-05-26 22:34:39'),
+(16, 'bekele', 'bekele@gmail.com', '$2y$10$sKXCb7UBbdoSRRjsHHc6TOV9CngBWnErR7kGfynODcFSPuiWNsi.K', 'owner', 'active', '2025-05-26 22:44:12'),
+(17, 'lema', 'lema@gmail.com', '$2y$10$lvLM/r8A65bMXSSoejAxeuhUWgFP3k4hR3iKB5O0n3aXHPstc6iAe', 'owner', 'active', '2025-05-26 22:47:57'),
+(18, 'girma', 'girma@gmail.com', '$2y$10$49b7eyyeHx7.FGaggPTYZuhJJTHRSVssvruGqkq1qcPRKxfFjURKS', 'owner', 'active', '2025-05-26 22:50:07'),
+(19, 'spoiuh', 'ertyu@gmail.com', '$2y$10$IOEf.O2P6gL/Dfyi1wlV0u35dTjokTnL/KPXXsaN4jd.3uRMUA.K.', 'owner', 'active', '2025-05-26 22:55:42');
 
 --
 -- Indexes for dumped tables
@@ -320,6 +347,13 @@ ALTER TABLE `reports`
   ADD KEY `fk_report_manager` (`property_manager_id`);
 
 --
+-- Indexes for table `reports_for_admin`
+--
+ALTER TABLE `reports_for_admin`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `property_manager_id` (`property_manager_id`);
+
+--
 -- Indexes for table `tenant_profiles`
 --
 ALTER TABLE `tenant_profiles`
@@ -360,7 +394,7 @@ ALTER TABLE `lease_agreements`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `rental_requests`
@@ -372,7 +406,13 @@ ALTER TABLE `rental_requests`
 -- AUTO_INCREMENT for table `reports`
 --
 ALTER TABLE `reports`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `reports_for_admin`
+--
+ALTER TABLE `reports_for_admin`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `transactions`
@@ -384,7 +424,7 @@ ALTER TABLE `transactions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- Constraints for dumped tables
@@ -441,6 +481,12 @@ ALTER TABLE `reports`
   ADD CONSTRAINT `fk_report_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`),
   ADD CONSTRAINT `reports_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `reports_ibfk_2` FOREIGN KEY (`property_manager_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `reports_for_admin`
+--
+ALTER TABLE `reports_for_admin`
+  ADD CONSTRAINT `reports_for_admin_ibfk_1` FOREIGN KEY (`property_manager_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `tenant_profiles`

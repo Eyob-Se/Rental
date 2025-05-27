@@ -1,5 +1,4 @@
 <?php
-// auth/register_process.php
 session_start();
 require_once '../config/db.php';
 
@@ -11,24 +10,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $password = $_POST['password'];
-    $role = $_POST['role']; // tenant or owner
+    $role = $_POST['role'];
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
 
-    // Validate role
+    $bank_account = null;
+    $payment_method = null;
+
+    if ($role === 'owner') {
+        $bank_account = isset($_POST['bank_account']) ? trim($_POST['bank_account']) : null;
+        $payment_method = isset($_POST['preferred_payment_method']) ? trim($_POST['preferred_payment_method']) : null;
+
+        if (empty($bank_account) || empty($payment_method)) {
+            die("Bank account and payment method are required for owners.");
+        }
+    }
+
     if (!in_array($role, ['tenant', 'owner'])) {
         die("Invalid role selected.");
     }
 
-    // Password hash
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-    // Handle ID photo upload
     if (isset($_FILES['id_photo']) && $_FILES['id_photo']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath = $_FILES['id_photo']['tmp_name'];
         $fileName = $_FILES['id_photo']['name'];
-        $fileSize = $_FILES['id_photo']['size'];
-        $fileType = $_FILES['id_photo']['type'];
         $fileNameCmps = explode(".", $fileName);
         $fileExtension = strtolower(end($fileNameCmps));
 
@@ -50,21 +56,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Insert into users table
         $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
         $stmt->execute([$name, $email, $hashed_password, $role]);
         $user_id = $pdo->lastInsertId();
 
-        // Insert into profile table
         if ($role === 'tenant') {
             $stmt = $pdo->prepare("INSERT INTO tenant_profiles (user_id, phone, address, id_photo) VALUES (?, ?, ?, ?)");
-        } else { // owner
-            $stmt = $pdo->prepare("INSERT INTO owner_profiles (user_id, phone, address, id_photo) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$user_id, $phone, $address, $newFileName]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO owner_profiles (user_id, phone, address, id_photo, account, bank) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$user_id, $phone, $address, $newFileName, $bank_account, $payment_method]);
         }
-        $stmt->execute([$user_id, $phone, $address, $newFileName]);
 
-        $_SESSION['success'] = "Registration successful. You can now login.";
-        header("Location: login.php");
+        // SweetAlert + redirect
+        echo "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Success</title>
+            <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        </head>
+        <body>
+            <script>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registered successfully!',
+                    text: 'You will be redirected to login shortly.',
+                    showConfirmButton: false,
+                    timer: 2000
+                }).then(() => {
+                    window.location.href = 'login.php';
+                });
+            </script>
+        </body>
+        </html>
+        ";
         exit;
 
     } catch (PDOException $e) {

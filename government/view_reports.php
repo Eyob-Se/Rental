@@ -1,150 +1,162 @@
 <?php
-session_start();
 require_once '../config/db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'government') {
-    header('Location: ../auth/login.php');
-    exit;
-}
+// Fetch owners with their houses
+$stmt = $pdo->prepare("
+    SELECT u.id AS owner_id, u.name AS owner_name, h.*
+    FROM users u
+    JOIN houses h ON u.id = h.owner_id
+    WHERE u.role = 'owner' AND h.is_rented = 1
+    ORDER BY u.name, h.title
+");
 
-// Fetch reports joining transactions and users (property manager)
-$sql = "
-    SELECT r.id AS report_id, r.report_data, r.flagged, r.created_at AS report_date,
-           t.id AS transaction_id, t.amount, t.payment_date,
-           pm.id AS pm_id, pm.name AS pm_name
-    FROM reports r
-    JOIN transactions t ON r.transaction_id = t.id
-    JOIN users pm ON r.property_manager_id = pm.id
-    ORDER BY r.created_at DESC
-";
-
-$stmt = $pdo->prepare($sql);
 $stmt->execute();
-$reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
-?>
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Group houses by owner
+$owners = [];
+foreach ($rows as $row) {
+    $ownerId = $row['owner_id'];
+    if (!isset($owners[$ownerId])) {
+        $owners[$ownerId] = [
+            'owner_name' => $row['owner_name'],
+            'houses' => [],
+        ];
+    }
+    $owners[$ownerId]['houses'][] = $row;
+}
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Government Report Page</title>
-  <link rel="stylesheet" href="../assets/style1.css" />
+    <title>Government View Reports</title>
+        <link rel="stylesheet" href="../assets/style1.css" />
+    <link rel="stylesheet" href="../assets/fonts/all.css" />
+    <style>
+        body {
+
+            background-color: #2b2d42;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4);
+        }
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* reduce top margin */
+    padding: 20px;
+    border-radius: 5px;
+    width: 90%; /* was 80%, now 90% */
+    max-width: 1000px; /* ensure it doesn’t get too wide on huge screens */
+    overflow-x: auto; /* allow scroll if content is too wide */
+}
+                .modal-actions textarea {
+            width: 100%; height: 80px; padding: 10px; border-radius: 4px; border: 1px solid #ddd;
+        }
+
+        .container{
+            margin-top: 3rem;
+            background-color: #e0d0c1;
+        }
+    </style>
 </head>
 <body>
-  <div class="prop_con">
+        <div class="navbar prop_nav">
+        <p>Rental.</p>
+        <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
+    </div>
 
-   <div class="navbar prop_nav">
-            <p>Rental.</p>
-            <button class="btn" onclick="window.location.href='../auth/logout.php'">Logout</button>
-        </div>
-
-    <div class="container">
-      <h2>Government Report Dashboard</h2>
-      <p>Overview of reports submitted by property managers</p>
-
-      <?php if (empty($reports)): ?>
-        <p>No reports found.</p>
-      <?php else: ?>
-        <table class="user-table">
-          <thead>
+<div class="container">
+    <h2 style="color: #2b2d42;padding-bottom:1rem;">Owner Reports</h2>
+    <table class="user-table">
+        <thead>
             <tr>
-              <th>Manager Name</th>
-              <th>Report ID</th>
-              <th>Transaction</th>
-              <th>Amount</th>
-              <th>Report Date</th>
-              <th>Status</th>
-              <th>View</th>
+                <th>Owner</th>
+                <th>Rented Houses</th>
+                <th>Action</th>
             </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($reports as $r): ?>
-              <tr>
-                <td><?= htmlspecialchars($r['pm_name']) ?></td>
-                <td>#<?= htmlspecialchars($r['report_id']) ?></td>
-                <td>#<?= htmlspecialchars($r['transaction_id']) ?></td>
-                <td>$<?= number_format($r['amount'], 2) ?></td>
-                <td><?= htmlspecialchars($r['report_date']) ?></td>
-                <td><span class="status <?= $r['flagged'] ? 'pending' : 'active' ?>">
-                    <?= $r['flagged'] ? 'Flagged' : 'Reviewed' ?>
-                </span></td>
-                <td><button class="btn viewReportBtn"
-                           data-manager="<?= htmlspecialchars($r['pm_name']) ?>"
-                           data-report="<?= htmlspecialchars($r['report_data']) ?>"
-                           data-date="<?= htmlspecialchars($r['report_date']) ?>"
-                           data-amount="<?= number_format($r['amount'], 2) ?>"
-                           data-payment="<?= htmlspecialchars($r['payment_date']) ?>"
-                           data-transaction="<?= htmlspecialchars($r['transaction_id']) ?>">
-                    View
-                </button></td>
-              </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($owners as $ownerId => $data): ?>
+            <tr>
+                <td><?= htmlspecialchars($data['owner_name']) ?></td>
+                <td><?= count($data['houses']) ?></td>
+                <td>
+                    <button class="btn open-modal" data-owner="<?= $ownerId ?>">View</button>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modals -->
+<?php foreach ($owners as $ownerId => $data): ?>
+<div id="modal-<?= $ownerId ?>" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" data-owner="<?= $ownerId ?>">&times;</span>
+        <h3><?= htmlspecialchars($data['owner_name']) ?>'s Rented Properties</h3>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Title</th><th>Bedrooms</th><th>Price</th><th>Area</th><th>Tax</th>
+                </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($data['houses'] as $house): ?>
+                <tr>
+                    <td><?= htmlspecialchars($house['title']) ?></td>
+                    <td><?= $house['bedrooms'] ?></td>
+                    <td>$<?= $house['price'] ?></td>
+                    <td><?= $house['area'] ?> sq ft</td>
+                    <td>$<?= number_format($house['price'] * 0.15, 2) ?> (15%)</td>
+                </tr>
             <?php endforeach; ?>
-          </tbody>
+            </tbody>
         </table>
-      <?php endif; ?>
+        <form method="POST" action="send_notice.php" class="modal-actions">
+            <input type="hidden" name="owner_id" value="<?= $ownerId ?>">
+            <textarea name="message" placeholder="Write a notice..." required></textarea>
+            <button type="submit" class="btn">Send Notice</button>
+        </form>
     </div>
+</div>
+<?php endforeach; ?>
 
-    <!-- Modal for Detailed Report -->
-    <div class="modal" id="reportDetailModal">
-      <div class="modal-content" id="reportContent">
-        <span class="close" id="closeDetailModal">&times;</span>
-        <h3>Report Details</h3>
-        <div class="report-details">
-          <p><strong>Manager:</strong> <span id="detailManager"></span></p>
-          <p><strong>Submitted On:</strong> <span id="detailDate"></span></p>
-          <hr>
-          <h4>Transaction</h4>
-          <p><strong>Transaction ID:</strong> <span id="detailTransaction"></span></p>
-          <p><strong>Amount:</strong> $<span id="detailAmount"></span></p>
-          <p><strong>Payment Date:</strong> <span id="detailPayment"></span></p>
-          <hr>
-          <h4>Report Content</h4>
-          <p id="detailReport"></p>
-        </div>
-        <button class="btn" id="downloadReportBtn">Download PDF</button>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    const modal = document.getElementById("reportDetailModal");
-    const closeBtn = document.getElementById("closeDetailModal");
-    const viewButtons = document.querySelectorAll(".viewReportBtn");
-    const downloadBtn = document.getElementById("downloadReportBtn");
-
-    viewButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.getElementById("detailManager").textContent = btn.dataset.manager;
-        document.getElementById("detailDate").textContent = btn.dataset.date;
-        document.getElementById("detailTransaction").textContent = btn.dataset.transaction;
-        document.getElementById("detailAmount").textContent = btn.dataset.amount;
-        document.getElementById("detailPayment").textContent = btn.dataset.payment;
-        document.getElementById("detailReport").textContent = btn.dataset.report;
-
-        modal.style.display = "flex";
-      });
-    });
-
-    closeBtn.onclick = () => {
-      modal.style.display = "none";
+<script>
+document.querySelectorAll('.open-modal').forEach(btn => {
+    btn.onclick = () => {
+        document.getElementById(`modal-${btn.dataset.owner}`).style.display = 'block';
     };
+});
 
-    window.onclick = (e) => {
-      if (e.target === modal) modal.style.display = "none";
+document.querySelectorAll('.close').forEach(span => {
+    span.onclick = () => {
+        document.getElementById(`modal-${span.dataset.owner}`).style.display = 'none';
     };
+});
 
-    downloadBtn.addEventListener("click", () => {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text("Government Report", 10, 10);
-
-      const reportText = document.querySelector(".report-details").innerText;
-      doc.text(reportText, 10, 20);
-      doc.save("report.pdf");
-    });
-  </script>
+window.onclick = e => {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+    }
+};
+</script>
 </body>
 </html>
