@@ -91,7 +91,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
         <input type="hidden" name="role" value="<?= $user['role'] ?>">
         <input type="hidden" name="action" value="<?= $user['status'] === 'active' ? 'deactivate' : 'activate' ?>">
-        <button type="submit">
+        <button class="btn" type="submit">
           <?= $user['status'] === 'active' ? 'Deactivate' : 'Activate' ?>
         </button>
       </form>
@@ -100,7 +100,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <input type="hidden" name="user_id" value="<?= $user['id'] ?>">
         <input type="hidden" name="role" value="<?= $user['role'] ?>">
         <input type="hidden" name="action" value="delete">
-        <button type="submit">Delete</button>
+        <button class="btn" type="submit">Delete</button>
       </form>
     </td>
   </tr>

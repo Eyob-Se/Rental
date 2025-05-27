@@ -42,6 +42,7 @@ error_reporting(E_ALL);
             </div>
 
             <div class="form-links">
+                <a href="forgot_password.php">Forgot Password?</a>
                 <a href="register.php">Don't have an account? Register</a>
             </div>
         </form>

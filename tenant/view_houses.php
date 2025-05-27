@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'tenant') {
 $tenantId = $_SESSION['user_id'];
 
 // Build the filtered house query (without location)
-$query = "SELECT * FROM houses WHERE status = 'approved'";
+$query = "SELECT * FROM houses WHERE status = 'approved' AND is_rented = 0";
 $params = [];
 
 if (!empty($_GET['min_price'])) {

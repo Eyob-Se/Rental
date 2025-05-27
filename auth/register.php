@@ -67,10 +67,20 @@
         <div id="ownerPaymentDetails" style="display: none; justify-content: space-between; align-items: center;">
           <label for="preferred_payment_method"><b>Preferred Payment Method</b></label>
           <input type="text" name="preferred_payment_method" id="preferred_payment_method" placeholder="Enter preferred payment method (e.g., Bank Name)" autocomplete="off" />
-
-          
           <input type="text" placeholder="Enter your bank account" name="bank_account" id="bank_account" autocomplete="off" />
         </div>
+
+        <label for="security_question"><b>Security Question</b></label>
+<select name="security_question" id="security_question" required>
+  <option value="">Select a security question</option>
+  <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+  <option value="What was the name of your elementary school?">What was the name of your elementary school?</option>
+  <option value="What is your mother’s maiden name?">What is your mother’s maiden name?</option>
+  <option value="In what city were you born?">In what city were you born?</option>
+</select>
+
+<label for="security_answer"><b>Answer</b></label>
+<input type="text" name="security_answer" id="security_answer" placeholder="Your answer" required autocomplete="off" />
 
         <label for="id_photo"><b>Upload ID Photo</b></label>
         <input type="file" name="id_photo" id="id_photo" accept="image/*" required />
@@ -232,6 +242,20 @@
         event.preventDefault();
       }
     }
+
+    const securityQuestion = form.security_question.value.trim();
+const securityAnswer = form.security_answer.value.trim();
+
+if (securityQuestion === '') {
+  showError(form.security_question, 'Please select a security question.');
+  event.preventDefault();
+}
+
+if (securityAnswer === '') {
+  showError(form.security_answer, 'Please provide an answer to your security question.');
+  event.preventDefault();
+}
+
   });
 
   function showError(element, message) {
@@ -274,31 +298,36 @@
     bank_account: {
       regex: /^\d+$/,
       message: 'Bank account should contain numbers only.'
+    },
+    security_answer: {
+    regex: /^.{3,}$/,
+    message: 'Answer must be at least 3 characters long.'
     }
+
   };
 
-  Object.keys(validators).forEach(fieldName => {
-    const field = document.forms[0][fieldName];
-    if (!field) return;
+Object.keys(validators).forEach(fieldName => {
+  const field = document.forms[0][fieldName];
+  if (!field) return;
 
-    field.addEventListener('input', () => {
-      const value = field.value.trim();
-      removeError(field);
+  field.addEventListener('input', () => {
+    const value = field.value.trim();
+    removeError(field);
 
-      const { regex, matchField, message } = validators[fieldName];
+    const { regex, matchField, message } = validators[fieldName];
 
-      if (regex && !regex.test(value)) {
+    if (regex && !regex.test(value)) {
+      showError(field, message);
+    }
+
+    if (matchField) {
+      const matchValue = document.forms[0][matchField].value.trim();
+      if (value !== matchValue) {
         showError(field, message);
       }
-
-      if (matchField) {
-        const matchValue = document.forms[0][matchField].value.trim();
-        if (value !== matchValue) {
-          showError(field, message);
-        }
-      }
-    });
+    }
   });
+});
 
   // Real-time file type validation
   const fileInput = document.forms[0]['id_photo'];

@@ -75,7 +75,7 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="navbar prop_nav">
       <p>Rental.</p>
       <ul>
-        <li><a href="manage_pm.php">Home</a></li>
+        <li><a href="manage_pm.php">Prop Mng</a></li>
         <li><a href="manage_users.php">User Mng</a></li>
         <li><a href="view_reports.php">Reports</a></li>
       </ul>

@@ -16,29 +16,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $report_id = $_POST['report_id'] ?? null;
 
-    if ($action === 'delete_report' && $report_id) {
-        $stmt = $pdo->prepare("DELETE FROM reports_for_admin WHERE id = ?");
+    if ($action === 'mark_read' && $report_id) {
+        $stmt = $pdo->prepare("UPDATE reports_for_admin SET is_read = 1 WHERE id = ?");
         $stmt->execute([$report_id]);
     }
 
     header("Location: view_reports.php");
     exit;
 }
+$show_read = isset($_GET['show_read']) && $_GET['show_read'] == 1;
 
-// Fetch all reports from reports_for_admin table with PM name
-$stmt = $pdo->prepare("
-    SELECT 
-        r.id AS report_id,
-        r.subject,
-        r.description,
-        r.created_at,
-        pm.name AS pm_name
-    FROM reports_for_admin r
-    JOIN users pm ON r.property_manager_id = pm.id
-    ORDER BY r.created_at DESC
-");
+// Fetch reports based on read status
+if ($show_read) {
+    $stmt = $pdo->prepare("
+        SELECT r.id AS report_id, r.subject, r.description, r.created_at, r.is_read,
+               pm.name AS pm_name
+        FROM reports_for_admin r
+        JOIN users pm ON r.property_manager_id = pm.id
+        WHERE r.is_read = 1
+        ORDER BY r.created_at DESC
+    ");
+} else {
+    $stmt = $pdo->prepare("
+        SELECT r.id AS report_id, r.subject, r.description, r.created_at, r.is_read,
+               pm.name AS pm_name
+        FROM reports_for_admin r
+        JOIN users pm ON r.property_manager_id = pm.id
+        WHERE r.is_read = 0
+        ORDER BY r.created_at DESC
+    ");
+}
 $stmt->execute();
 $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <!DOCTYPE html>
@@ -55,7 +65,7 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="navbar prop_nav">
       <p>Rental.</p>
       <ul>
-        <li><a href="manage_pm.php">Home</a></li>
+        <li><a href="manage_pm.php">Prop Mng</a></li>
         <li><a href="manage_users.php">User Mng</a></li>
         <li><a href="view_reports.php" class="active">Reports</a></li>
       </ul>
@@ -66,46 +76,54 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <h2>Reports Submitted by Property Managers</h2>
       <p>Monitor and act on reports submitted by PMs</p>
 
-      <?php if (!$reports): ?>
-        <p>No reports found.</p>
-      <?php else: ?>
-        <div class="top-bar">
-          <input type="text" id="searchInput" placeholder="🔍 Search reports...">
-        </div>
+<div class="top-bar">
+  <input type="text" id="searchInput" placeholder="🔍 Search reports...">
+  <a href="view_reports.php?show_read=<?= $show_read ? 0 : 1 ?>" class="btn" style="margin-left:10px;">
+    <?= $show_read ? 'Show Unread Reports' : 'Show Read Reports' ?>
+  </a>
+</div>
 
-        <div style="overflow-x:auto;">
-          <table class="user-table" id="reportTable">
-            <thead>
-              <tr>
-                <th>Report ID</th>
-                <th>Subject</th>
-                <th>Description</th>
-                <th>Date</th>
-                <th>Property Manager</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($reports as $r): ?>
-                <tr>
-                  <td><?= htmlspecialchars($r['report_id']) ?></td>
-                  <td><?= htmlspecialchars($r['subject']) ?></td>
-                  <td><?= htmlspecialchars($r['description']) ?></td>
-                  <td><?= htmlspecialchars($r['created_at']) ?></td>
-                  <td><?= htmlspecialchars($r['pm_name']) ?></td>
-                  <td class="actions">
-                    <form method="POST" action="view_reports.php" style="display:inline;">
-                      <input type="hidden" name="report_id" value="<?= $r['report_id'] ?>">
-                      <input type="hidden" name="action" value="delete_report">
-                      <button class="btn" type="submit" onclick="return confirm('Delete this report?')">Delete Report</button>
-                    </form>
-                  </td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
+<?php if (!$reports): ?>
+  <p>No reports found.</p>
+<?php else: ?>
+  <div style="overflow-x:auto;">
+    <table class="user-table" id="reportTable">
+      <thead>
+        <tr>
+          <th>Report ID</th>
+          <th>Subject</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Property Manager</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($reports as $r): ?>
+          <tr>
+            <td><?= htmlspecialchars($r['report_id']) ?></td>
+            <td><?= htmlspecialchars($r['subject']) ?></td>
+            <td><?= htmlspecialchars($r['description']) ?></td>
+            <td><?= htmlspecialchars($r['created_at']) ?></td>
+            <td><?= htmlspecialchars($r['pm_name']) ?></td>
+            <td class="actions">
+              <?php if ($r['is_read'] == 0): ?>
+                <form method="POST" action="view_reports.php" style="display:inline;">
+                  <input type="hidden" name="report_id" value="<?= $r['report_id'] ?>">
+                  <input type="hidden" name="action" value="mark_read">
+                  <button class="btn" type="submit" onclick="return confirm('Mark this report as read?')">Mark as Read</button>
+                </form>
+              <?php else: ?>
+                <span style="color: gray;">✔️ Read</span>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+<?php endif; ?>
+
     </div>
 
     <footer>

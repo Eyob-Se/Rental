@@ -13,6 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'];
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
+    $security_question = trim($_POST['security_question']);
+    $security_answer = trim($_POST['security_answer']);
+
+    if (empty($security_question) || empty($security_answer)) {
+        die("Security question and answer are required.");
+    }
 
     $bank_account = null;
     $payment_method = null;
@@ -56,10 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        // Insert into users table
         $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
         $stmt->execute([$name, $email, $hashed_password, $role]);
         $user_id = $pdo->lastInsertId();
 
+        // Insert into tenant_profiles or owner_profiles
         if ($role === 'tenant') {
             $stmt = $pdo->prepare("INSERT INTO tenant_profiles (user_id, phone, address, id_photo) VALUES (?, ?, ?, ?)");
             $stmt->execute([$user_id, $phone, $address, $newFileName]);
@@ -67,6 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("INSERT INTO owner_profiles (user_id, phone, address, id_photo, account, bank) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([$user_id, $phone, $address, $newFileName, $bank_account, $payment_method]);
         }
+
+        // Insert into security table
+        $hashed_answer = password_hash($security_answer, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO security (question, answer, user_id) VALUES (?, ?, ?)");
+        $stmt->execute([$security_question, $hashed_answer, $user_id]);
+
 
         // SweetAlert + redirect
         echo "
