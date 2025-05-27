@@ -3,7 +3,7 @@ session_start();
 require_once './config/db.php';
 
 // Fetch all approved houses (publicly visible)
-$stmt = $pdo->prepare("SELECT * FROM houses WHERE status = 'approved'");
+$stmt = $pdo->prepare("SELECT * FROM houses WHERE status = 'approved' AND is_rented = 0");
 $stmt->execute();
 $houses = $stmt->fetchAll();
 
@@ -58,7 +58,7 @@ $isTenant = isset($_SESSION['user_id']) && $_SESSION['role'] === 'tenant';
                             <button type="submit" class="btn">Request to Rent</button>
                         </form>
                     <?php else: ?>
-                        <a href="../auth/login.php" class="btn">View Details</a>
+                        <a href="./auth/login.php" class="btn">View Details</a>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
@@ -68,7 +68,7 @@ $isTenant = isset($_SESSION['user_id']) && $_SESSION['role'] === 'tenant';
     </div>
 
     <!-- Footer -->
-    <footer style="position: absolute; bottom: 0px; width: 100%;">
+    <footer>
     <div class="footer">
       <div class="footer-container">
         <div class="footer-top">

@@ -212,7 +212,9 @@ button:hover {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* changed from center */
+  padding: 2rem 1rem; /* added padding so modal isn't flush with top */
+  overflow-y: auto; /* allow scrolling if needed */
   z-index: 999;
 }
 
@@ -226,6 +228,8 @@ button:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   position: relative;
   animation: fadeIn 0.3s ease;
+  max-height: 90vh; /* NEW: limit height */
+  overflow-y: auto;   /* NEW: scroll inside modal content if needed */
 }
 
 @keyframes fadeIn {

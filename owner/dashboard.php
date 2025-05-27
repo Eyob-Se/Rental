@@ -31,9 +31,21 @@ try {
     $stmt->execute([$user_id]);
     $houses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // TODO: Fetch rented houses info if you want to fill the rented houses table
-    // For now, just empty array or mock data
-    $rentedHouses = []; // Replace with actual fetch logic
+   // Fetch rented houses info
+$stmt = $pdo->prepare("
+    SELECT 
+        h.title, h.location, h.price, 
+        u.name AS tenant_name, 
+        t.payment_date AS start_date
+    FROM houses h
+    INNER JOIN transactions t ON h.id = t.house_id
+    INNER JOIN users u ON t.tenant_id = u.id
+    WHERE h.owner_id = ? AND t.status = 'verified'
+    ORDER BY t.payment_date DESC
+");
+$stmt->execute([$user_id]);
+$rentedHouses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
 }
@@ -168,7 +180,7 @@ try {
             <td><?= htmlspecialchars($rented['location']) ?></td>
             <td><?= htmlspecialchars($rented['tenant_name']) ?></td>
             <td>$<?= number_format($rented['price'], 2) ?></td>
-            <td><?= htmlspecialchars($rented['start_date']) ?></td>
+            <td><?= date('Y-m-d', strtotime($rented['start_date'])) ?></td>
             <td><span class="status inactive">Rented</span></td>
           </tr>
         <?php endforeach; ?>

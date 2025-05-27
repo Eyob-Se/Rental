@@ -6,9 +6,10 @@ $stmt = $pdo->prepare("
     SELECT u.id AS owner_id, u.name AS owner_name, h.*
     FROM users u
     JOIN houses h ON u.id = h.owner_id
-    WHERE u.role = 'owner'
+    WHERE u.role = 'owner' AND h.is_rented = 1
     ORDER BY u.name, h.title
 ");
+
 $stmt->execute();
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -29,16 +30,65 @@ foreach ($rows as $row) {
 <html>
 <head>
     <title>Government View Reports</title>
-    <link rel="stylesheet" href="../assets/style1.css">
+        <link rel="stylesheet" href="../assets/style1.css" />
+    <link rel="stylesheet" href="../assets/fonts/all.css" />
+    <style>
+        body {
+
+            background-color: #2b2d42;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4);
+        }
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* reduce top margin */
+    padding: 20px;
+    border-radius: 5px;
+    width: 90%; /* was 80%, now 90% */
+    max-width: 1000px; /* ensure it doesn’t get too wide on huge screens */
+    overflow-x: auto; /* allow scroll if content is too wide */
+}
+                .modal-actions textarea {
+            width: 100%; height: 80px; padding: 10px; border-radius: 4px; border: 1px solid #ddd;
+        }
+
+        .container{
+            margin-top: 3rem;
+            background-color: #e0d0c1;
+        }
+    </style>
 </head>
 <body>
+        <div class="navbar prop_nav">
+        <p>Rental.</p>
+        <button class="btn" type="button" onclick="window.location.href='../auth/logout.php'">Logout</button>
+    </div>
+
 <div class="container">
-    <h2>Owner Reports</h2>
+    <h2 style="color: #2b2d42;padding-bottom:1rem;">Owner Reports</h2>
     <table class="user-table">
         <thead>
             <tr>
                 <th>Owner</th>
-                <th>House Count</th>
+                <th>Rented Houses</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -61,7 +111,7 @@ foreach ($rows as $row) {
 <div id="modal-<?= $ownerId ?>" class="modal" style="display: none;">
     <div class="modal-content">
         <span class="close" data-owner="<?= $ownerId ?>">&times;</span>
-        <h3><?= htmlspecialchars($data['owner_name']) ?>'s Properties</h3>
+        <h3><?= htmlspecialchars($data['owner_name']) ?>'s Rented Properties</h3>
         <table class="user-table">
             <thead>
                 <tr>
@@ -75,7 +125,7 @@ foreach ($rows as $row) {
                     <td><?= $house['bedrooms'] ?></td>
                     <td>$<?= $house['price'] ?></td>
                     <td><?= $house['area'] ?> sq ft</td>
-                    <td>$<?= number_format($house['price'] * 0.015, 2) ?> (1.5%)</td>
+                    <td>$<?= number_format($house['price'] * 0.15, 2) ?> (15%)</td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

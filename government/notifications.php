@@ -9,7 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-<<<<<<< HEAD
 try {
     $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
@@ -45,40 +44,7 @@ $rental_requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
-=======
-// Check if user is owner
-$stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-if ($stmt->fetchColumn() !== 'owner') {
-    die("Access denied.");
->>>>>>> 5cbba60f673a376968cd9f7e349e948ac27e0918
 }
-
-// Fetch rental requests forwarded to this owner
-$stmt = $pdo->prepare("
-    SELECT rr.id AS request_id, rr.message, rr.status, rr.created_at,
-           rr.pm_id,
-           u.name AS sender_name,
-           h.id AS house_id, h.title AS house_title, h.bedrooms, h.bathrooms, h.area, h.price, h.image_path
-    FROM rental_requests rr
-    JOIN users u ON rr.tenant_id = u.id
-    JOIN houses h ON rr.house_id = h.id
-    WHERE h.owner_id = ? AND rr.status = 'forwarded'
-    ORDER BY rr.created_at DESC
-");
-$stmt->execute([$user_id]);
-$rentalRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch general notifications sent to this owner
-$stmt = $pdo->prepare("
-    SELECT n.*, u.name AS sender_name
-    FROM notifications n
-    JOIN users u ON n.sender_id = u.id
-    WHERE n.receiver_id = ?
-    ORDER BY n.created_at DESC
-");
-$stmt->execute([$user_id]);
-$generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -91,11 +57,12 @@ $generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
 <div class="prop_con">
-    <!-- Navigation -->
+
+    <!-- Navigation Bar -->
     <div class="navbar prop_nav">
         <p>Rental.</p>
         <ul>
-            <li><a href="notifications.php" class="active">Notifications</a></li>
+            <li><a href="notifications.php">Notifications</a></li>
             <li><a href="dashboard.php">Houses</a></li>
         </ul>
         <button class="btn" onclick="window.location.href='../auth/logout.php'">Logout</button>
@@ -106,7 +73,6 @@ $generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <input type="text" id="notificationFilter" placeholder="🔍 Filter notifications" />
         </div>
 
-<<<<<<< HEAD
 <section>
     <!-- Rental Requests Section -->
     <h3>Rental Requests</h3>
@@ -195,79 +161,6 @@ $generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </tbody>
     </table>
 </section>
-=======
-        <!-- Rental Requests -->
-        <section>
-            <h3>Rental Requests</h3>
-            <table class="user-table" id="notificationTable">
-                <thead>
-                    <tr>
-                        <th>Sender</th>
-                        <th>Received</th>
-                        <th>Message</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($rentalRequests)): ?>
-                        <tr><td colspan="4">No notifications.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($rentalRequests as $note): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($note['sender_name']) ?></td>
-                            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
-                            <td>Rental request received for house: <?= htmlspecialchars($note['house_title']) ?></td>
-                            <td>
-                                <button class="btn open-modal"
-                                    data-id="<?= $note['request_id'] ?>"
-                                    data-sender="<?= htmlspecialchars($note['sender_name']) ?>"
-                                    data-sender-id="<?= $note['pm_id'] ?>"
-                                    data-message="Rental request for <?= htmlspecialchars($note['house_title']) ?>"
-                                    data-house="<?= htmlspecialchars($note['house_title']) ?>"
-                                    data-house-id="<?= $note['house_id'] ?>"
-                                    data-bedrooms="<?= $note['bedrooms'] ?>"
-                                    data-bathrooms="<?= $note['bathrooms'] ?>"
-                                    data-area="<?= $note['area'] ?>"
-                                    data-price="<?= $note['price'] ?>"
-                                    data-image="<?= htmlspecialchars($note['image_path']) ?>"
-                                    data-status="<?= $note['status'] ?>">
-                                    Respond
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- General Notifications -->
-        <section>
-            <h3>General Notifications</h3>
-            <table class="user-table" id="generalNotificationTable">
-                <thead>
-                    <tr>
-                        <th>Sender</th>
-                        <th>Received</th>
-                        <th>Message</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($generalNotifications)): ?>
-                        <tr><td colspan="3">No notifications.</td></tr>
-                    <?php else: ?>
-                        <?php foreach ($generalNotifications as $note): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($note['sender_name']) ?></td>
-                            <td><?= date('Y-m-d H:i', strtotime($note['created_at'])) ?></td>
-                            <td><?= htmlspecialchars($note['message']) ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </section>
->>>>>>> 5cbba60f673a376968cd9f7e349e948ac27e0918
     </div>
 </div>
 
@@ -275,9 +168,9 @@ $generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div id="actionModal" class="modal" style="display:none;">
     <div class="modal-content">
         <span class="close">&times;</span>
-        <h3>Respond to Rental Request</h3>
-        <p><strong>Tenant:</strong> <span id="modalSender"></span></p>
-        <p><strong>Message:</strong> <span id="modalMessage"></span></p>
+        <h3 style="color: #2b2d42;">Respond to Rental Request</h3>
+        <p style="color: #2b2d42;"><strong>Tenant:</strong> <span id="modalSender"></span></p>
+        <p style="color: #2b2d42;"><strong>Message:</strong> <span id="modalMessage"></span></p>
         <p><strong>House:</strong> <span id="modalHouse"></span></p>
         <p><strong>Bedrooms:</strong> <span id="modalBedrooms"></span></p>
         <p><strong>Bathrooms:</strong> <span id="modalBathrooms"></span></p>
@@ -295,13 +188,10 @@ $generalNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
+<script src="../../assets/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-<<<<<<< HEAD
     // Rental Requests Modal (your existing code)
-=======
-    // Modal logic
->>>>>>> 5cbba60f673a376968cd9f7e349e948ac27e0918
     document.querySelectorAll('.open-modal').forEach(button => {
         button.addEventListener('click', () => {
             if (button.dataset.status === 'notice') {
@@ -323,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('modalPrice').textContent = button.dataset.price;
                 document.getElementById('modalImage').src = "../uploads/house_images/" + button.dataset.image;
 
-<<<<<<< HEAD
                 document.getElementById('modalNotificationId').value = button.dataset.id;
                 document.getElementById('modalHouseId').value = button.dataset.houseId;
                 document.getElementById('modalSenderId').value = button.dataset.senderId;
@@ -337,10 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Hide government modal if open
                 document.getElementById('govNoticeModal').style.display = 'none';
             }
-=======
-            document.querySelector('.modal-actions').style.display = button.dataset.status === 'forwarded' ? 'flex' : 'none';
-            document.getElementById('actionModal').style.display = 'block';
->>>>>>> 5cbba60f673a376968cd9f7e349e948ac27e0918
         });
     });
 
@@ -354,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Close modals when clicking outside modal content
     window.onclick = event => {
-<<<<<<< HEAD
         const actionModal = document.getElementById('actionModal');
         const govNoticeModal = document.getElementById('govNoticeModal');
 
@@ -363,25 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (event.target === govNoticeModal) {
             govNoticeModal.style.display = 'none';
-=======
-        if (event.target === document.getElementById('actionModal')) {
-            document.getElementById('actionModal').style.display = 'none';
->>>>>>> 5cbba60f673a376968cd9f7e349e948ac27e0918
         }
     };
 
-    // Filter logic
-    const filterInput = document.getElementById('notificationFilter');
-    filterInput.addEventListener('input', () => {
-        const filter = filterInput.value.toLowerCase();
-        ['notificationTable', 'generalNotificationTable'].forEach(tableId => {
-            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-            rows.forEach(row => {
-                const rowText = row.textContent.toLowerCase();
-                row.style.display = rowText.includes(filter) ? '' : 'none';
-            });
-        });
-    });
+    // Optional: Add filter logic for notifications table here (if you want)
 });
 
 

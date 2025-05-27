@@ -15,16 +15,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $report_id = $_POST['report_id'] ?? null;
-    $user_id = $_POST['user_id'] ?? null;
 
-    if ($action === 'flag_user' && $user_id) {
-        $stmt = $pdo->prepare("UPDATE users SET status = 'inactive' WHERE id = ?");
-        $stmt->execute([$user_id]);
-    } elseif ($action === 'delete_user' && $user_id) {
-        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
-        $stmt->execute([$user_id]);
-    } elseif ($action === 'delete_report' && $report_id) {
-        $stmt = $pdo->prepare("DELETE FROM reports WHERE id = ?");
+    if ($action === 'delete_report' && $report_id) {
+        $stmt = $pdo->prepare("DELETE FROM reports_for_admin WHERE id = ?");
         $stmt->execute([$report_id]);
     }
 
@@ -32,20 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-// Fetch all reports with correct joins
+// Fetch all reports from reports_for_admin table with PM name
 $stmt = $pdo->prepare("
     SELECT 
         r.id AS report_id,
-        r.report_data,
-        r.created_at AS report_date,
-        u.id AS user_id,
-        u.name AS user_name,
-        u.role AS user_role,
-        u.status AS user_status,
+        r.subject,
+        r.description,
+        r.created_at,
         pm.name AS pm_name
-    FROM reports r
-    JOIN transactions t ON r.transaction_id = t.id
-    JOIN users u ON t.tenant_id = u.id
+    FROM reports_for_admin r
     JOIN users pm ON r.property_manager_id = pm.id
     ORDER BY r.created_at DESC
 ");
@@ -90,12 +78,10 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <thead>
               <tr>
                 <th>Report ID</th>
-                <th>Text</th>
+                <th>Subject</th>
+                <th>Description</th>
                 <th>Date</th>
-                <th>Reported User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>PM Name</th>
+                <th>Property Manager</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -103,31 +89,11 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
               <?php foreach ($reports as $r): ?>
                 <tr>
                   <td><?= htmlspecialchars($r['report_id']) ?></td>
-                  <td><?= htmlspecialchars($r['report_data']) ?></td>
-                  <td><?= htmlspecialchars($r['report_date']) ?></td>
-                  <td><?= htmlspecialchars($r['user_name']) ?></td>
-                  <td><?= htmlspecialchars($r['user_role']) ?></td>
-                  <td>
-                    <span class="status <?= $r['user_status'] === 'inactive' ? 'inactive' : 'active' ?>">
-                      <?= htmlspecialchars($r['user_status']) ?>
-                    </span>
-                  </td>
+                  <td><?= htmlspecialchars($r['subject']) ?></td>
+                  <td><?= htmlspecialchars($r['description']) ?></td>
+                  <td><?= htmlspecialchars($r['created_at']) ?></td>
                   <td><?= htmlspecialchars($r['pm_name']) ?></td>
                   <td class="actions">
-                    <?php if ($r['user_status'] !== 'inactive'): ?>
-                      <form method="POST" action="view_reports.php" style="display:inline;">
-                        <input type="hidden" name="report_id" value="<?= $r['report_id'] ?>">
-                        <input type="hidden" name="user_id" value="<?= $r['user_id'] ?>">
-                        <input type="hidden" name="action" value="flag_user">
-                        <button class="btn" type="submit">Deactivate</button>
-                      </form>
-                    <?php endif; ?>
-                    <form method="POST" action="view_reports.php" style="display:inline;">
-                      <input type="hidden" name="report_id" value="<?= $r['report_id'] ?>">
-                      <input type="hidden" name="user_id" value="<?= $r['user_id'] ?>">
-                      <input type="hidden" name="action" value="delete_user">
-                      <button class="btn" type="submit" onclick="return confirm('Delete this user?')">Delete User</button>
-                    </form>
                     <form method="POST" action="view_reports.php" style="display:inline;">
                       <input type="hidden" name="report_id" value="<?= $r['report_id'] ?>">
                       <input type="hidden" name="action" value="delete_report">
@@ -142,35 +108,34 @@ $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
       <?php endif; ?>
     </div>
 
-    <footer style="position: absolute; bottom: 0px; width: 100%;">
-    <div class="footer">
-      <div class="footer-container">
-        <div class="footer-top">
-          <p style=" color: #2b2d42;">&copy; <?= date("Y") ?> Rental System. All rights reserved.</p>
-          <div class="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms</a>
-            <a href="#">Contact</a>
+    <footer>
+      <div class="footer">
+        <div class="footer-container">
+          <div class="footer-top">
+            <p style="color: #2b2d42;">&copy; <?= date("Y") ?> Rental System. All rights reserved.</p>
+            <div class="footer-links">
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms</a>
+              <a href="#">Contact</a>
+            </div>
+          </div>
+
+          <div class="footer-social">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-x-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+
+          <div class="footer-newsletter">
+            <form action="#" method="post">
+              <input type="email" placeholder="Your email address" required>
+              <button type="submit"><i class="fa fa-paper-plane"></i> Subscribe</button>
+            </form>
           </div>
         </div>
-
-        <div class="footer-social">
-          <a href="#"><i class="fab fa-facebook-f"></i></a>
-          <a href="#"><i class="fab fa-x-twitter"></i></a>
-          <a href="#"><i class="fab fa-instagram"></i></a>
-          <a href="#"><i class="fab fa-linkedin-in"></i></a>
-        </div>
-
-        <div class="footer-newsletter">
-          <form action="#" method="post">
-            <input type="email" placeholder="Your email address" required>
-            <button type="submit"><i class="fa fa-paper-plane"></i> Subscribe</button>
-          </form>
-        </div>
       </div>
-    </div>
-  </div>
-</footer>
+    </footer>
 
   <script src="../assets/main.js"></script>
   <script>
